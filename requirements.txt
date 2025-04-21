@@ -1,0 +1,8 @@
+
+Werkzeug
+Flask
+gunicorn
+pandas
+PyMuPDF
+Faker
+openai

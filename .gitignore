@@ -1,0 +1,27 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Environnements virtuels
+venv/
+.env
+.env.local
+
+# IDEs
+.vscode/
+.idea/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers d’upload et résultats (sauf les .gitkeep)
+uploads/*
+!uploads/.gitkeep
+fichiers_anonymises/*
+!fichiers_anonymises/.gitkeep
+
+# Bases de données ou fichiers temporaires
+instance/
+*.sqlite3
