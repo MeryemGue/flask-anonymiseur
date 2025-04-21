@@ -23,13 +23,15 @@ os.makedirs(RESULT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
 
 def allowed_file(filename):
     return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
 
 # ✅ Fonction de synthèse automatique
 def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
+    from openai import OpenAI
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     contenu = ""
 
     for fichier in fichiers_anonymises:
