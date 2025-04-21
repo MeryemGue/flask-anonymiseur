@@ -25,3 +25,5 @@ fichiers_anonymises/*
 # Bases de données ou fichiers temporaires
 instance/
 *.sqlite3
+
+
