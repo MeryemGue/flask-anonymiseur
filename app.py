@@ -1,6 +1,8 @@
 import fitz
 from flask import Flask, render_template, request, redirect, send_from_directory, flash, url_for
 import os
+
+from openai import OpenAI
 from werkzeug.utils import secure_filename
 from utils import anonymiser_pdf, anonymiser_fichier_fec
 import openai
@@ -21,7 +23,8 @@ os.makedirs(RESULT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+#client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI()
 
 def allowed_file(filename):
     return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
