@@ -1,18 +1,16 @@
 import fitz
-from flask import Flask, render_template, request, redirect, send_from_directory, flash, url_for
+from flask import Flask, render_template, request, send_from_directory, flash, url_for, session
 import os
-
-from openai import OpenAI
-from werkzeug.utils import secure_filename
-from utils import anonymiser_pdf, anonymiser_fichier_fec
-import openai
+from werkzeug.utils import secure_filename, redirect
 from dotenv import load_dotenv
-load_dotenv()
+from utils import anonymiser_pdf, anonymiser_fichier_fec
 
+load_dotenv()
 
 # --- Config ---
 app = Flask(__name__)
-app.secret_key = 'xpert-ia-secret'
+app.secret_key = 'xpert-ia-secret'  # nécessaire pour utiliser `session`
+
 UPLOAD_FOLDER = 'uploads'
 RESULT_FOLDER = 'fichiers_anonymises'
 ALLOWED_EXTENSIONS = {'.pdf', '.txt'}
@@ -24,11 +22,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
 
-
 def allowed_file(filename):
     return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
 
-# ✅ Fonction de synthèse automatique
+
 def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
     from openai import OpenAI
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -49,11 +46,8 @@ Voici des documents anonymisés :
 
 {contenu[:3000]}
 
-Génère une synthèse professionnelle et structurée comportant :
-- ✅ Les informations essentielles extraites
-- 🚨 Toute irrégularité ou point sensible
-- 📌 Les points à surveiller ou analyser
-- 📝 Présentation claire avec titres ou bullet points si pertinent
+Génère une synthèse professionnelle et structurée comportant et ignorer les données personnelles :
+- Présentation claire avec titres ou bullet points si pertinent
 
 Langue : Français
 """
@@ -66,9 +60,13 @@ Langue : Français
 
     return completion.choices[0].message.content
 
+
 @app.route("/", methods=["GET", "POST"])
 def index():
-    fichiers_traites = []
+    if "historique_fichiers" not in session:
+        session["historique_fichiers"] = []
+
+    nouveaux_fichiers = []
     synthese = ""
 
     if request.method == "POST":
@@ -88,15 +86,37 @@ def index():
                     result = None
 
                 if result:
-                    fichiers_traites.append(os.path.basename(result))
+                    basename = os.path.basename(result)
+                    nouveaux_fichiers.append(basename)
 
-        if fichiers_traites:
+        # Mise à jour de l'historique (évite les doublons)
+        historique = set(session.get("historique_fichiers", []))
+        historique.update(nouveaux_fichiers)
+        session["historique_fichiers"] = list(historique)
+
+        # Générer la synthèse uniquement pour les nouveaux fichiers
+        if nouveaux_fichiers:
             try:
-                synthese = generer_synthese_llm(fichiers_traites)
+                synthese = generer_synthese_llm(nouveaux_fichiers)
             except Exception as e:
                 synthese = "Erreur lors de la synthèse IA : " + str(e)
 
-    return render_template("index.html", fichiers=fichiers_traites, synthese=synthese)
+    return render_template(
+        "index.html",
+        fichiers=session.get("historique_fichiers", []),
+        synthese=synthese
+    )
+
+@app.route("/reset")
+def reset():
+    # Supprimer les fichiers anonymisés
+    for f in os.listdir(RESULT_FOLDER):
+        os.remove(os.path.join(RESULT_FOLDER, f))
+
+    # Réinitialiser l'historique en session
+    session["historique_fichiers"] = []
+    flash(" Historique réinitialisé avec succès.", "info")
+    return redirect(url_for("index"))
 
 @app.route('/download/<filename>')
 def download_file(filename):
@@ -105,5 +125,3 @@ def download_file(filename):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-
-
