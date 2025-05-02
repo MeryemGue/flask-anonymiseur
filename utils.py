@@ -12,7 +12,7 @@ DOSSIER_ANONYMISÉ = "fichiers_anonymises"
 os.makedirs(DOSSIER_ANONYMISÉ, exist_ok=True)
 
 # === Chargement modèle spaCy personnalisé ===
-MODELE_PATH = "C:/Users/marye/PycharmProjects/pythonProject1/flask-anonymiseur/modele_spacy(bulletin)/model-best"
+MODELE_PATH = "flask-anonymiseur/models/model-best"
 nlp = spacy.load(MODELE_PATH)
 
 # === FEC ===
