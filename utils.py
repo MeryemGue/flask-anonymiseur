@@ -16,29 +16,55 @@ MODELE_PATH = os.path.join(os.path.dirname(__file__), "models", "model-best")
 nlp = spacy.load(MODELE_PATH)
 
 # === FEC ===
-def anonymiser_nom(nom): return fake.company() if pd.notna(nom) else nom
-def anonymiser_compte(num): return re.sub(r"\d", "X", num) if pd.notna(num) else num
-def anonymiser_piece(piece): return "REF-" + str(fake.random_int(min=10000, max=99999)) if pd.notna(piece) else piece
+# --- Compteurs pour générer des identifiants anonymes ---
+compteur_personne = 1
+compteur_client = 1
+
+# --- Fonctions RGPD conformes ---
+def anonymiser_compte(val):
+    return "XXXXXXXXXX" if pd.notna(val) else val
+
+def anonymiser_piece(val):
+    return "REF-" + str(fake.random_int(min=10000, max=99999)) if pd.notna(val) else val
+
+def anonymiser_nom_generique(prefixe):
+    global compteur_personne
+    identifiant = f"{prefixe}{str(compteur_personne).zfill(3)}"
+    compteur_personne += 1
+    return identifiant
+
+def anonymiser_client_generique():
+    global compteur_client
+    identifiant = f"Client{str(compteur_client).zfill(3)}"
+    compteur_client += 1
+    return identifiant
+
 def detecter_separateur(chemin_fichier):
     with open(chemin_fichier, 'r', encoding='utf-8') as f:
         ligne = f.readline()
         return "|" if ligne.count("|") > ligne.count("\t") else "\t"
-def anonymiser_nom_fec(nom): return fake.name() if pd.notna(nom) else nom
 
 def anonymiser_fichier_fec(chemin_fichier):
     try:
         sep = detecter_separateur(chemin_fichier)
         df = pd.read_csv(chemin_fichier, sep=sep, dtype=str)
-        colonnes_requises = ["CompteNum", "CompteLib", "CompAuxNum", "CompAuxLib", "PieceRef"]
+
+        # Vérification des colonnes
+        colonnes_requises = ["CompteNum", "CompteLib", "CompAuxNum", "CompAuxLib", "PieceRef", "EcritureLib"]
         for col in colonnes_requises:
             if col not in df.columns:
                 print(f"Colonne manquante : {col}")
                 return None
-        df["CompteLib"] = df["CompteLib"].apply(anonymiser_nom_fec)
+
+        # Anonymisation conforme RGPD
         df["CompteNum"] = df["CompteNum"].apply(anonymiser_compte)
         df["CompAuxNum"] = df["CompAuxNum"].apply(anonymiser_compte)
-        df["CompAuxLib"] = df["CompAuxLib"].apply(anonymiser_nom)
+        df["CompteLib"] = df["CompteLib"].apply(lambda x: anonymiser_nom_generique("Client") if pd.notna(x) else x)
+        df["CompAuxLib"] = df["CompAuxLib"].apply(lambda x: anonymiser_client_generique() if pd.notna(x) else x)
         df["PieceRef"] = df["PieceRef"].apply(anonymiser_piece)
+        df["EcritureLib"] = df["EcritureLib"].apply(lambda x: "Libellé anonymisé" if pd.notna(x) else x)
+
+        # Enregistrement
         nom_fichier = os.path.basename(chemin_fichier)
         sortie = os.path.join(DOSSIER_ANONYMISÉ, f"anonymise_{nom_fichier}")
         df.to_csv(sortie, sep=sep, index=False)
