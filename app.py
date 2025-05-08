@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, send_from_directory, flash, u
 import os
 from werkzeug.utils import secure_filename, redirect
 from dotenv import load_dotenv
-from utils import anonymiser_pdf, anonymiser_fichier_fec
+from utils import anonymiser_pdf, anonymiser_fichier_fec, anonymiser_fichier_dsn  # <== Ajout DSN
 
 load_dotenv()
 
@@ -13,7 +13,7 @@ app.secret_key = 'xpert-ia-secret'  # nécessaire pour utiliser `session`
 
 UPLOAD_FOLDER = 'uploads'
 RESULT_FOLDER = 'fichiers_anonymises'
-ALLOWED_EXTENSIONS = {'.pdf', '.txt'}
+ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.edi'}  # <== Ajout .edi
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULT_FOLDER, exist_ok=True)
@@ -33,10 +33,12 @@ def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
 
     for fichier in fichiers_anonymises:
         path = os.path.join(dossier, fichier)
-        if path.endswith(".txt"):
+        ext = os.path.splitext(fichier)[1].lower()
+
+        if ext in {".txt", ".edi"}:  # <== Synthèse aussi pour .edi
             with open(path, "r", encoding="utf-8") as f:
                 contenu += f.read() + "\n\n"
-        elif path.endswith(".pdf"):
+        elif ext == ".pdf":
             doc = fitz.open(path)
             contenu += "\n".join([page.get_text() for page in doc]) + "\n\n"
             doc.close()
@@ -82,6 +84,8 @@ def index():
                     result = anonymiser_pdf(path)
                 elif ext == ".txt":
                     result = anonymiser_fichier_fec(path)
+                elif ext == ".edi":  # <== Ajout DSN
+                    result = anonymiser_fichier_dsn(path)
                 else:
                     result = None
 
@@ -107,6 +111,7 @@ def index():
         synthese=synthese
     )
 
+
 @app.route("/reset")
 def reset():
     # Supprimer les fichiers anonymisés
@@ -117,6 +122,7 @@ def reset():
     session["historique_fichiers"] = []
     flash(" Historique réinitialisé avec succès.", "info")
     return redirect(url_for("index"))
+
 
 @app.route('/download/<filename>')
 def download_file(filename):

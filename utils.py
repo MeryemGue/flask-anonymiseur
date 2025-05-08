@@ -6,6 +6,10 @@ from faker import Faker
 import spacy
 import ocrmypdf
 
+import hashlib
+from datetime import datetime
+
+
 # === Configuration ===
 fake = Faker("fr_FR")
 DOSSIER_ANONYMISÉ = "fichiers_anonymises"
@@ -14,6 +18,9 @@ os.makedirs(DOSSIER_ANONYMISÉ, exist_ok=True)
 # === Chargement modèle spaCy personnalisé ===
 MODELE_PATH = os.path.join(os.path.dirname(__file__), "models", "model-best")
 nlp = spacy.load(MODELE_PATH)
+
+MODELE_PATH2 = os.path.join(os.path.dirname(__file__), "models", "model-best2")
+nlp2 = spacy.load(MODELE_PATH2)
 
 # === FEC ===
 # --- Compteurs pour générer des identifiants anonymes ---
@@ -260,12 +267,213 @@ def anonymiser_pdf(chemin_pdf):
     try:
         with fitz.open(chemin_pdf) as doc:
             has_text = any(page.get_text().strip() for page in doc)
-        if has_text:
-            print("📄 PDF simple détecté — Anonymisation directe")
-            return anonymiser_pdf_simple(chemin_pdf)
-        else:
-            print("🖨️ PDF scanné détecté — OCR lancé")
-            return anonymiser_pdf_ocr(chemin_pdf)
+
+            if has_text:
+                # 🧪 Lire le contenu de la 1ère page
+                texte_page1 = doc[0].get_text().lower()
+                print("📝 Texte page 1 =", texte_page1[:200])  # Affiche les 200 premiers caractères
+
+                # ✅ Test : est-ce un contrat ?
+                if "contrat" in texte_page1 and "travail" in texte_page1:
+                    print("📄 Contrat détecté dans PDF simple — anonymisation spéciale")
+                    chemin_sortie = os.path.join(DOSSIER_ANONYMISÉ, f"anonymise_{os.path.basename(chemin_pdf)}")
+                    anonymiser_Contrat(chemin_pdf, chemin_sortie)
+                    return chemin_sortie
+
+                print("📄 PDF simple détecté — Anonymisation bulletin")
+                return anonymiser_pdf_simple(chemin_pdf)
+
+            else:
+                print("🖨️ PDF scanné détecté — OCR lancé")
+                return anonymiser_pdf_ocr(chemin_pdf)
+
     except Exception as e:
         print("❌ Erreur lors de la détection du type de PDF :", str(e))
+        return None
+
+
+
+# === Utilitaires DSN ===
+def hash_nir(nir):
+    return hashlib.sha256(nir.encode()).hexdigest()[:12]
+
+def tranche_age(date_str):
+    try:
+        jour, mois, annee = int(date_str[:2]), int(date_str[2:4]), int(date_str[4:8])
+        age = datetime.now().year - annee
+        if age < 25: return "'Moins de 25 ans'"
+        elif age < 30: return "'25-29 ans'"
+        elif age < 35: return "'30-34 ans'"
+        elif age < 40: return "'35-39 ans'"
+        elif age < 50: return "'40-49 ans'"
+        else: return "'50 ans et plus'"
+    except:
+        return "'X'"
+
+# === Codes sensibles DSN ===
+codes_anonymisation_dsn = {
+    "S10.G00.00.001": lambda val, i: "'ANON_APP'",
+    "S10.G00.00.002": lambda val, i: "'ANON_APP'",
+    "S10.G00.00.003": lambda val, i: "'XXXXXXXXX'",
+    "S10.G00.01.001": lambda val, i: "'000000000'",
+    "S10.G00.01.003": lambda val, i: "'ENTREPRISE_X'",
+    "S10.G00.01.004": lambda val, i: "'X'",
+    "S10.G00.01.005": lambda val, i: val,
+    "S10.G00.01.006": lambda val, i: "'X'",
+    "S10.G00.02.002": lambda val, i: "'DECLARANT_X'",
+    "S10.G00.02.004": lambda val, i: "'dummy@email.com'",
+    "S10.G00.02.005": lambda val, i: "'DUMMY_PHONE'",
+    "S20.G00.05.004": lambda val, i: "'" + hash_nir(val.strip("'")) + "'",
+    "S20.G00.07.002": lambda val, i: "'DUMMY_PHONE'",
+    "S20.G00.07.003": lambda val, i: "'dummy@email.com'",
+    "S21.G00.30.001": lambda val, i: "'" + hash_nir(val.strip("'")) + "'",
+    "S21.G00.30.002": lambda val, i: f"'SAL_{i:04d}'",
+    "S21.G00.30.003": lambda val, i: f"'SAL_{i:04d}'",
+    "S20.G00.07.001": lambda val, i: f"'SAL_{i:04d}'",
+    "S21.G00.30.004": lambda val, i: "'X'",
+    "S21.G00.30.006": lambda val, i: tranche_age(val.strip("'")),
+    "S21.G00.30.008": lambda val, i: "'X'",
+    "S21.G00.30.010": lambda val, i: "'X'",
+}
+
+# === Regex génériques DSN ===
+email_regex_dsn = re.compile(r"[\w\.-]+@[\w\.-]+")
+phone_regex_dsn = re.compile(r"'\d{10}'")
+siret_regex_dsn = re.compile(r"'\d{9}'|'\d{14}'")
+date_naissance_regex_dsn = re.compile(r"'\d{8}'")
+
+# === Fonction principale ===
+def anonymiser_fichier_dsn(chemin_fichier):
+    try:
+        with open(chemin_fichier, 'r', encoding='utf-8') as f:
+            lignes = f.readlines()
+
+        lignes_anonymisees = []
+        compteur_salarie = 1
+
+        for ligne in lignes:
+            ligne = ligne.strip()
+            if not ligne or ',' not in ligne:
+                lignes_anonymisees.append(ligne + "\n")
+                continue
+
+            code, val = map(str.strip, ligne.split(",", 1))
+            valeur = val.strip()
+
+            if code in codes_anonymisation_dsn:
+                valeur_anonyme = codes_anonymisation_dsn[code](valeur, compteur_salarie)
+                ligne_anonyme = f"{code},{valeur_anonyme}"
+                if code == "S21.G00.30.001":
+                    compteur_salarie += 1
+            else:
+                # Anonymisation générique
+                if email_regex_dsn.search(valeur):
+                    ligne_anonyme = f"{code},'dummy@email.com'"
+                elif phone_regex_dsn.search(valeur):
+                    ligne_anonyme = f"{code},'0000000000'"
+                elif siret_regex_dsn.search(valeur):
+                    ligne_anonyme = f"{code},'000000000'"
+                elif date_naissance_regex_dsn.search(valeur):
+                    ligne_anonyme = f"{code},'01011970'"
+                else:
+                    ligne_anonyme = ligne  # inchangé
+
+            lignes_anonymisees.append(ligne_anonyme + "\n")
+
+        # Enregistrement
+        nom_fichier = os.path.basename(chemin_fichier)
+        sortie = os.path.join(DOSSIER_ANONYMISÉ, f"anonymise_{nom_fichier}")
+        with open(sortie, 'w', encoding='utf-8') as f_out:
+            f_out.writelines(lignes_anonymisees)
+
+        print(f"✅ Fichier DSN anonymisé : {sortie}")
+        return sortie
+
+    except Exception as e:
+        print("Erreur d'anonymisation DSN :", str(e))
+        return None
+
+
+def anonymiser_Contrat(pdf_ocr_path, pdf_sortie_path):
+    REGEX_NOM_MANUEL = re.compile(
+        r'\b(Monsieur|M.|Madame|M\.?|Mr\.?)\s+(?:[A-Z][a-zéèêàîïç\-]+\s+)?[A-Z][A-Z\-]+\b'
+    )
+    REGEX_ENTREPRISE_MANUEL = re.compile(
+        r'\b(la société|la sarl|l\'entreprise|le groupe|la sas|la sa)\s+([A-Z&\s\.\'\-]+)', flags=re.IGNORECASE
+    )
+
+    EXCLUSIONS = [
+        "CONTRAT DE TRAVAIL", "A TEMPS COMPLET", "A DUREE INDETERMINEE", "CREATIONS DU SALARIE","DEPLACEMENTS",
+        "ARTICLE", "REMUNERATION", "FONCTIONS", "Entre", "ABSENCES", "CONFIDENTIALITE", "NON-CONCURRENCE","NON - CONCURRENCE","CREATIONS DU SALARIE"
+    ]
+    LABELS_READABLE = {
+        "NOM": "nom", "ADRESSE": "adresse", "SIRET": "siret", "NSS": "nss", "DATE": "date",
+        "CODE_NAF": "code_naf", "ENTREPRISE": "entreprise", "MATRICULE": "matricule", "URSSAF": "urssaf"
+    }
+
+    doc = fitz.open(pdf_ocr_path)
+
+    for page_number, page in enumerate(doc):
+        print(f"\n📄 Traitement de la page {page_number + 1}")
+        blocks = page.get_text("dict")["blocks"]
+        modifications = []
+        x_offset, y_offset = -2, 8
+
+        for block in blocks:
+            if block['type'] != 0:
+                continue
+
+            for line in block['lines']:
+                spans = line['spans']
+                full_line = "".join([s['text'] for s in spans])
+                doc_spacy = nlp2(full_line)
+
+                texte_anonymise = ""
+                last_idx = 0
+                used_spans = []
+
+                for ent in doc_spacy.ents:
+                    if ent.label_ in LABELS_READABLE and not any(ex in ent.text.upper() for ex in EXCLUSIONS):
+                        texte_anonymise += full_line[last_idx:ent.start_char] + "*******"
+                        last_idx = ent.end_char
+                        used_spans.append((ent.start_char, ent.end_char))
+                texte_anonymise += full_line[last_idx:]
+
+                if not any(e.label_ == "NOM" for e in doc_spacy.ents):
+                    for match in REGEX_NOM_MANUEL.finditer(full_line):
+                        span_start, span_end = match.span()
+                        if not any(s <= span_start < e or s < span_end <= e for s, e in used_spans):
+                            texte_anonymise = texte_anonymise.replace(match.group(), "********")
+
+                for match in REGEX_ENTREPRISE_MANUEL.finditer(full_line):
+                    texte_anonymise = texte_anonymise.replace(match.group(), f"{match.group(1)} *********")
+
+                if texte_anonymise != full_line:
+                    print(f"🔒 Bloc anonymisé : {full_line.strip()} ➡️ {texte_anonymise.strip()}")
+                    for s in spans:
+                        page.add_redact_annot(s['bbox'], fill=(1, 1, 1))
+                    x0, y0 = spans[0]['bbox'][:2]
+                    font_size = spans[0]['size']
+                    modifications.append((x0 + x_offset, y0 + y_offset, texte_anonymise, font_size))
+
+        page.apply_redactions()
+        for x0, y0, texte, font_size in modifications:
+            page.insert_text((x0, y0), texte, fontsize=font_size, color=(0, 0, 0))
+
+    doc.save(pdf_sortie_path)
+    doc.close()
+    print(f"\n✅ PDF anonymisé sauvegardé sous : {pdf_sortie_path}")
+
+
+
+def anonymiser_fichier(chemin_fichier):
+    ext = os.path.splitext(chemin_fichier)[1].lower()
+    if ext == ".csv" or ext == ".txt":
+        return anonymiser_fichier_fec(chemin_fichier)
+    elif ext == ".pdf":
+        return anonymiser_pdf(chemin_fichier)
+    elif ext == ".edi":
+        return anonymiser_fichier_dsn(chemin_fichier)
+    else:
+        print("❓ Format non pris en charge :", ext)
         return None
