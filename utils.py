@@ -396,7 +396,7 @@ def anonymiser_fichier_dsn(chemin_fichier):
 
 def anonymiser_Contrat(pdf_ocr_path, pdf_sortie_path):
     REGEX_NOM_MANUEL = re.compile(
-        r'\b(Monsieur|M.|Madame|M\.?|Mr\.?)\s+(?:[A-Z][a-zéèêàîïç\-]+\s+)?[A-Z][A-Z\-]+\b'
+        r'\b(Monsieur|M.|Madame|M\.?|Mr\.?)\s+(?:[A-Z][a-zéèêàîïç\-]+\s+)?[A-Z][A-Z\-]+\b',flags=re.IGNORECASE
     )
     REGEX_ENTREPRISE_MANUEL = re.compile(
         r'\b(la société|la sarl|l\'entreprise|le groupe|la sas|la sa)\s+([A-Z&\s\.\'\-]+)', flags=re.IGNORECASE
