@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -31,6 +30,10 @@
       max-width: 800px;
       margin: 0 auto;
     }
+
+    table th, table td {
+      vertical-align: middle !important;
+    }
   </style>
 </head>
 <body>
@@ -42,6 +45,10 @@
     <p class="lead">Déposez vos fichiers confidentiels à anonymiser automatiquement</p>
   </div>
 
+  <p class="text-muted fst-italic text-center">
+    Les fichiers chargés dans l’anonymiseur sont traités strictement localement sur votre disque dur.
+  </p>
+
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, msg in messages %}
@@ -50,11 +57,10 @@
     {% endif %}
   {% endwith %}
 
-  <!-- Ajout de la marge bas (mb-4) -->
   <form id="upload-form" method="POST" enctype="multipart/form-data" class="mb-4">
     <div class="drop-zone" id="drop-zone">
       <input type="file" name="files" id="file-input" multiple hidden accept=".pdf,.txt">
-      <p>🗂️ Glissez ici vos fichiers ou cliquez pour parcourir</p>
+      <p>📂 Glissez ici vos fichiers ou cliquez pour parcourir</p>
     </div>
     <div class="text-center mt-3">
       <button type="submit" class="btn btn-primary">🚀 Lancer l'anonymisation</button>
@@ -62,29 +68,62 @@
     </div>
   </form>
 
-  <!-- Loader caché au début -->
-<div id="loader" class="text-center text-primary fw-bold my-4" style="display: none;">
-  <div class="d-flex justify-content-center align-items-center">
-    <div class="spinner-border text-primary me-2" role="status" style="width: 1.5rem; height: 1.5rem;">
-      <span class="visually-hidden">Chargement...</span>
+  <div id="loader" class="text-center text-primary fw-bold my-4" style="display: none;">
+    <div class="d-flex justify-content-center align-items-center">
+      <div class="spinner-border text-primary me-2" role="status" style="width: 1.5rem; height: 1.5rem;">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      Anonymisation en cours...
     </div>
-     Anonymisation en cours...
   </div>
-</div>
-
 
   {% if fichiers %}
-    <div class="mt-4">
-      <h4 class="text-primary">📂 Historique des fichiers anonymisés :</h4>
-      <ul class="list-group mb-4">
-        {% for file in fichiers %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            {{ file }}
-            <a href="{{ url_for('download_file', filename=file) }}" class="btn btn-sm btn-success">Télécharger</a>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
+  <div class="mt-4">
+    <h4 class="text-primary">📂 Historique des fichiers anonymisés :</h4>
+
+    <form id="download-form">
+      <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+        <div>
+          <label for="file-filter" class="form-label me-2">Filtrer par type :</label>
+          <select id="file-filter" class="form-select form-select-sm d-inline w-auto">
+            <option value="all">Tous</option>
+            <option value="pdf">PDF</option>
+            <option value="txt">TXT</option>
+            <option value="edi">EDI</option>
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" id="download-selected" class="btn btn-primary btn-sm">Télécharger les fichiers sélectionnés</button>
+          <button type="button" id="download-all" class="btn btn-success btn-sm">Télécharger tout</button>
+        </div>
+      </div>
+
+      <table class="table table-bordered table-hover align-middle" id="file-table">
+        <thead class="table-light">
+          <tr>
+            <th scope="col"><input type="checkbox" id="select-all"></th>
+            <th scope="col">Nom du fichier</th>
+            <th scope="col" class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for file in fichiers %}
+          <tr data-filename="{{ file }}">
+            <td><input type="checkbox" class="file-checkbox" value="{{ file }}"></td>
+            <td class="filename-cell">{{ file }}</td>
+            <td class="text-center">
+              <a href="{{ url_for('download_file', filename=file) }}" class="btn btn-sm btn-success">Télécharger</a>
+              <a href="{{ url_for('delete_file', filename=file) }}" class="btn btn-sm btn-danger ms-1">Supprimer</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <nav>
+        <ul class="pagination justify-content-center" id="pagination"></ul>
+      </nav>
+    </form>
+  </div>
   {% endif %}
 
   {% if synthese %}
@@ -98,108 +137,190 @@
 </div>
 
 <script>
-  const dropZone = document.getElementById('drop-zone');
-  const input = document.getElementById('file-input');
-  const form = document.getElementById('upload-form');
+const rowsPerPage = 9;
 
-  let droppedFiles = [];
+function paginateTable() {
+  const table = document.getElementById('file-table');
+  if (!table) return;
 
-  dropZone.addEventListener('click', () => input.click());
+  const rows = Array.from(table.querySelectorAll('tbody tr')).filter(r => r.style.display !== 'none');
+  const pagination = document.getElementById('pagination');
+  pagination.innerHTML = '';
 
-  dropZone.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropZone.classList.add('bg-light');
-  });
+  if (rows.length <= rowsPerPage) return;
 
-  dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('bg-light');
-  });
+  const totalPages = Math.ceil(rows.length / rowsPerPage);
+  let currentPage = 1;
 
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('bg-light');
-
-    droppedFiles = Array.from(e.dataTransfer.files);
-    dropZone.innerHTML = `<p>📂 ${droppedFiles.length} fichier(s) sélectionné(s)</p>`;
-  });
-
-  input.addEventListener('change', () => {
-    droppedFiles = Array.from(input.files);
-    if (droppedFiles.length > 0) {
-      dropZone.innerHTML = `<p>📂 ${droppedFiles.length} fichier(s) sélectionné(s)</p>`;
-    }
-  });
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    if (droppedFiles.length === 0) {
-      alert("⚠️ Aucun fichier sélectionné !");
-      return;
-    }
-
-    // Affiche le loader
-    document.getElementById('loader').style.display = 'block';
-
-    const formData = new FormData();
-    droppedFiles.forEach(file => {
-      formData.append('files', file);
+  function showPage(page) {
+    currentPage = page;
+    rows.forEach((row, i) => {
+      row.style.display = (i >= (page - 1) * rowsPerPage && i < page * rowsPerPage) ? '' : 'none';
     });
 
-    fetch("/", {
-      method: "POST",
-      body: formData
-    })
+    pagination.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      const li = document.createElement('li');
+      li.className = `page-item ${i === page ? 'active' : ''}`;
+      li.innerHTML = `<button class="page-link">${i}</button>`;
+      li.addEventListener('click', () => showPage(i));
+      pagination.appendChild(li);
+    }
+  }
+
+  showPage(1);
+}
+
+function attachFilterEvent() {
+  const oldFilter = document.getElementById('file-filter');
+  if (!oldFilter) return;
+
+  const newFilter = oldFilter.cloneNode(true);
+  oldFilter.parentNode.replaceChild(newFilter, oldFilter);
+
+  newFilter.addEventListener('change', function () {
+    const type = this.value;
+    const rows = document.querySelectorAll('#file-table tbody tr');
+    rows.forEach(row => {
+      const name = row.getAttribute('data-filename');
+      row.style.display = (type === 'all' || name.endsWith('.' + type)) ? '' : 'none';
+    });
+    paginateTable();
+  });
+}
+
+function attachCheckboxAndDownloadEvents() {
+  const selectAll = document.getElementById('select-all');
+  if (selectAll) {
+    selectAll.addEventListener('change', function () {
+      document.querySelectorAll('.file-checkbox').forEach(cb => cb.checked = this.checked);
+    });
+  }
+
+  const downloadSelected = document.getElementById('download-selected');
+  if (downloadSelected) {
+    downloadSelected.addEventListener('click', () => {
+      const selected = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(cb => cb.value);
+      if (selected.length === 0) {
+        alert("⚠️ Aucun fichier sélectionné.");
+        return;
+      }
+      selected.forEach(filename => {
+        const link = document.createElement('a');
+        link.href = `/download/${encodeURIComponent(filename)}`;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    });
+  }
+
+  const downloadAll = document.getElementById('download-all');
+  if (downloadAll) {
+    downloadAll.addEventListener('click', () => {
+      const allRows = document.querySelectorAll('#file-table tbody tr');
+      if (allRows.length === 0) {
+        alert("⚠️ Aucun fichier à télécharger.");
+        return;
+      }
+      allRows.forEach(row => {
+        const filename = row.getAttribute('data-filename');
+        const link = document.createElement('a');
+        link.href = `/download/${encodeURIComponent(filename)}`;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    });
+  }
+}
+
+const dropZone = document.getElementById('drop-zone');
+const input = document.getElementById('file-input');
+const form = document.getElementById('upload-form');
+let droppedFiles = [];
+
+dropZone.addEventListener('click', () => input.click());
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('bg-light');
+});
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('bg-light');
+});
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('bg-light');
+  droppedFiles = Array.from(e.dataTransfer.files);
+  dropZone.innerHTML = `<p>📂 ${droppedFiles.length} fichier(s) sélectionné(s)</p>`;
+});
+input.addEventListener('change', () => {
+  droppedFiles = Array.from(input.files);
+  if (droppedFiles.length > 0) {
+    dropZone.innerHTML = `<p>📂 ${droppedFiles.length} fichier(s) sélectionné(s)</p>`;
+  }
+});
+
+form.addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (droppedFiles.length === 0) {
+    alert("⚠️ Aucun fichier sélectionné !");
+    return;
+  }
+
+  document.getElementById('loader').style.display = 'block';
+  const formData = new FormData();
+  droppedFiles.forEach(file => {
+    formData.append('files[]', file);
+  });
+
+  fetch("/", {
+    method: "POST",
+    body: formData
+  })
     .then(response => response.text())
     .then(html => {
-      // Cache le loader
       document.getElementById('loader').style.display = 'none';
-
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, "text/html");
 
-      const fichiersSection = doc.querySelector("ul.list-group");
-      const syntheseCard = doc.querySelector(".card.mb-5");
-      const container = document.querySelector(".container");
+      const newContent = doc.querySelector(".mt-4");
+      const oldContent = document.querySelector(".mt-4");
+      if (oldContent && newContent) oldContent.replaceWith(newContent);
+      else if (newContent) form.insertAdjacentElement("afterend", newContent);
 
-      const oldFichiers = document.querySelector("ul.list-group");
-      if (oldFichiers && fichiersSection) {
-        oldFichiers.replaceWith(fichiersSection);
-      } else if (fichiersSection) {
-        form.insertAdjacentElement("afterend", fichiersSection);
-      }
-
+      const newSynthese = doc.querySelector(".card.mb-5");
       const oldSynthese = document.querySelector(".card.mb-5");
-      if (oldSynthese && syntheseCard) {
-        oldSynthese.replaceWith(syntheseCard);
-      } else if (syntheseCard) {
-        container.appendChild(syntheseCard);
-      }
-
-      if (syntheseCard) {
-        syntheseCard.scrollIntoView({ behavior: "smooth" });
-      }
+      if (oldSynthese && newSynthese) oldSynthese.replaceWith(newSynthese);
+      else if (newSynthese) document.querySelector(".container").appendChild(newSynthese);
 
       dropZone.innerHTML = "<p>🗂️ Glissez ici vos fichiers ou cliquez pour parcourir</p>";
       droppedFiles = [];
       input.value = "";
+
+      attachCheckboxAndDownloadEvents();
+      attachFilterEvent();
+      paginateTable();
     })
     .catch(error => {
-      // Cache le loader même en cas d'erreur
       document.getElementById('loader').style.display = 'none';
       alert("Erreur lors de l’envoi : " + error);
     });
-  });
+});
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(alert => alert.remove());
+  }, 3000);
+  attachCheckboxAndDownloadEvents();
+  attachFilterEvent();
+  paginateTable();
+});
 </script>
-<script>
-  // Auto-fermeture des notifications flash après 3 secondes
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      document.querySelectorAll('.alert').forEach(alert => {
-        alert.remove();
-      });
-    }, 3000); // 3000 ms = 3 secondes
-  });
-</script>
+
 </body>
 </html>

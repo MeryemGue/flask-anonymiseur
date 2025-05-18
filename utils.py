@@ -29,7 +29,11 @@ compteur_client = 1
 
 # --- Fonctions RGPD conformes ---
 def anonymiser_compte(val):
-    return "XXXXXXXXXX" if pd.notna(val) else val
+    if pd.notna(val):
+        val_str = str(val)
+        visible = val_str[:4]
+        return visible + "X" * (len(val_str) - 4)
+    return val
 
 def anonymiser_piece(val):
     return "REF-" + str(fake.random_int(min=10000, max=99999)) if pd.notna(val) else val
@@ -294,6 +298,30 @@ def anonymiser_pdf(chemin_pdf):
 
 
 # === Utilitaires DSN ===
+adresse_fields = [
+    "S21.G00.06.003",  # Adresse de l'établissement
+    "S21.G00.11.003",  # Adresse de la DADS-U
+    "S21.G00.30.007",  # Ville du salarié
+    "S21.G00.30.009",  # Code postal
+    "S21.G00.30.017",  # Adresse complémentaire
+    "S21.G00.85.003",  # Adresse établissement
+    "S21.G00.85.005",  # Ville établissement
+]
+
+
+# === Fonction d’anonymisation des adresses
+def anonymiser_adresses(texte):
+    lignes = texte.splitlines()
+    nouvelles_lignes = []
+    for ligne in lignes:
+        for code in adresse_fields:
+            if ligne.startswith(f"{code},"):
+                ligne = f"{code},'[ADRESSE]'"
+        nouvelles_lignes.append(ligne)
+    return "\n".join(nouvelles_lignes)
+
+
+# === Utilitaires DSN ===
 def hash_nir(nir):
     return hashlib.sha256(nir.encode()).hexdigest()[:12]
 
@@ -324,12 +352,12 @@ codes_anonymisation_dsn = {
     "S10.G00.02.004": lambda val, i: "'dummy@email.com'",
     "S10.G00.02.005": lambda val, i: "'DUMMY_PHONE'",
     "S20.G00.05.004": lambda val, i: "'" + hash_nir(val.strip("'")) + "'",
+    "S20.G00.07.001": lambda val, i: f"'SAL_{i:04d}'",
     "S20.G00.07.002": lambda val, i: "'DUMMY_PHONE'",
     "S20.G00.07.003": lambda val, i: "'dummy@email.com'",
     "S21.G00.30.001": lambda val, i: "'" + hash_nir(val.strip("'")) + "'",
     "S21.G00.30.002": lambda val, i: f"'SAL_{i:04d}'",
     "S21.G00.30.003": lambda val, i: f"'SAL_{i:04d}'",
-    "S20.G00.07.001": lambda val, i: f"'SAL_{i:04d}'",
     "S21.G00.30.004": lambda val, i: "'X'",
     "S21.G00.30.006": lambda val, i: tranche_age(val.strip("'")),
     "S21.G00.30.008": lambda val, i: "'X'",
@@ -341,6 +369,7 @@ email_regex_dsn = re.compile(r"[\w\.-]+@[\w\.-]+")
 phone_regex_dsn = re.compile(r"'\d{10}'")
 siret_regex_dsn = re.compile(r"'\d{9}'|'\d{14}'")
 date_naissance_regex_dsn = re.compile(r"'\d{8}'")
+
 
 # === Fonction principale ===
 def anonymiser_fichier_dsn(chemin_fichier):
@@ -378,13 +407,19 @@ def anonymiser_fichier_dsn(chemin_fichier):
                 else:
                     ligne_anonyme = ligne  # inchangé
 
-            lignes_anonymisees.append(ligne_anonyme + "\n")
+            lignes_anonymisees.append(ligne_anonyme)
 
         # Enregistrement
         nom_fichier = os.path.basename(chemin_fichier)
         sortie = os.path.join(DOSSIER_ANONYMISÉ, f"anonymise_{nom_fichier}")
+        # Appliquer anonymisation des adresses
+        contenu_anonymise = "\n".join(lignes_anonymisees)
+        contenu_anonymise = anonymiser_adresses(contenu_anonymise)
+        lignes_anonymisees = contenu_anonymise.splitlines(keepends=True)
+
         with open(sortie, 'w', encoding='utf-8') as f_out:
             f_out.writelines(lignes_anonymisees)
+
 
         print(f"✅ Fichier DSN anonymisé : {sortie}")
         return sortie

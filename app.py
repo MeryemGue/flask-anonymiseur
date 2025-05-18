@@ -62,6 +62,21 @@ Langue : Français
 
     return completion.choices[0].message.content
 
+@app.route('/delete/<filename>')
+def delete_file(filename):
+    file_path = os.path.join(app.config["RESULT_FOLDER"], filename)
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        flash(f"Le fichier '{filename}' a été supprimé.", "success")
+    else:
+        flash(f"Le fichier '{filename}' est introuvable.", "danger")
+
+    # Mettre à jour la session pour retirer le fichier de la liste affichée
+    if "historique_fichiers" in session and filename in session["historique_fichiers"]:
+        session["historique_fichiers"].remove(filename)
+
+    return redirect(url_for('index'))
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -72,7 +87,7 @@ def index():
     synthese = ""
 
     if request.method == "POST":
-        files = request.files.getlist("files")
+        files = request.files.getlist("files[]")
         for file in files:
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
