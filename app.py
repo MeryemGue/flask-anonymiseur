@@ -127,8 +127,10 @@ def index():
 
     return render_template(
         "index.html",
-        fichiers=session.get("historique_fichiers", []),
-        synthese=synthese
+        #fichiers=session.get("historique_fichiers", []),
+        fichiers=sorted(os.listdir(app.config["RESULT_FOLDER"])),
+
+    synthese=synthese
     )
 
 
