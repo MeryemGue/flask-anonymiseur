@@ -78,6 +78,7 @@ def delete_file(filename):
 
     return redirect(url_for('index'))
 
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     if "historique_fichiers" not in session:
@@ -95,13 +96,17 @@ def index():
                 file.save(path)
 
                 ext = os.path.splitext(filename)[1].lower()
-                if ext == ".pdf":
-                    result = anonymiser_pdf(path)
-                elif ext == ".txt":
-                    result = anonymiser_fichier_fec(path)
-                elif ext == ".edi":  # <== Ajout DSN
-                    result = anonymiser_fichier_dsn(path)
-                else:
+                try:
+                    if ext == ".pdf":
+                        result = anonymiser_pdf(path)
+                    elif ext == ".txt":
+                        result = anonymiser_fichier_fec(path)
+                    elif ext == ".edi":
+                        result = anonymiser_fichier_dsn(path)
+                    else:
+                        result = None
+                except Exception as e:
+                    print(f"❌ Erreur lors du traitement du fichier {filename} : {e}")
                     result = None
 
                 if result:

@@ -9,6 +9,9 @@ import ocrmypdf
 import hashlib
 from datetime import datetime
 
+import subprocess
+print("🧪 tesseract :", subprocess.getoutput("tesseract --version"))
+print("🧪 ghostscript :", subprocess.getoutput("gs --version"))
 
 # === Configuration ===
 fake = Faker("fr_FR")
@@ -194,9 +197,14 @@ def anonymiser_pdf_ocr(chemin_pdf):
         print(f"\n✅ PDF anonymisé généré : {PDF_SORTIE} — Total : {total_anonymise} éléments remplacés.")
         return PDF_SORTIE
 
+
     except Exception as e:
-        print("Erreur PDF OCR :", e)
+        import traceback
+        print("❌ Erreur PDF OCR :", e)
+        traceback.print_exc()
         return None
+
+
 # === PDF simple ===
 def anonymiser_pdf_simple(chemin_pdf):
     try:

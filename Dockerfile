@@ -3,6 +3,7 @@ FROM python:3.10-slim
 # === Install dependencies for OCR ===
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
+    tesseract-ocr-fra\
     ghostscript \
     unpaper \
     libjpeg-dev \
@@ -13,6 +14,8 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+
 
 # === Crée un dossier de travail ===
 WORKDIR /app
@@ -28,3 +31,6 @@ EXPOSE 8080
 
 # === Commande pour lancer Flask (tu peux adapter) ===
 CMD ["python", "app.py"]
+
+
+
