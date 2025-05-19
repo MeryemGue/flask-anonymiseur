@@ -277,7 +277,7 @@ form.addEventListener('submit', function (e) {
   document.getElementById('loader').style.display = 'block';
   const formData = new FormData();
   droppedFiles.forEach(file => {
-    formData.append('files[]', file);
+    formData.append('files', file);
   });
 
   fetch("/", {
