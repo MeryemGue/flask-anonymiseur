@@ -104,7 +104,7 @@ def anonymiser_pdf_ocr(chemin_pdf):
             remove_background=True,
             optimize=1,
             oversample=150,  # 🔽 Réduction de résolution d'entrée
-            skip_big=True,  # ✅ Ignore les pages très lourdes au lieu de crasher
+            skip_big=40000000, # Limite à 40 millions de pixels ≈ 3167x3167 pixels
             jobs=1
         )
         print("✅ OCR terminé :", PDF_OCR)
