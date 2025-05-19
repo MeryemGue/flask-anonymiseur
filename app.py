@@ -3,17 +3,16 @@ from flask import Flask, render_template, request, send_from_directory, flash, u
 import os
 from werkzeug.utils import secure_filename, redirect
 from dotenv import load_dotenv
-from utils import anonymiser_pdf, anonymiser_fichier_fec, anonymiser_fichier_dsn  # <== Ajout DSN
+from utils import anonymiser_pdf, anonymiser_fichier_fec, anonymiser_fichier_dsn
 
 load_dotenv()
 
-# --- Config ---
 app = Flask(__name__)
-app.secret_key = 'xpert-ia-secret'  # nécessaire pour utiliser `session`
+app.secret_key = 'xpert-ia-secret'
 
 UPLOAD_FOLDER = 'uploads'
 RESULT_FOLDER = 'fichiers_anonymises'
-ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.edi'}  # <== Ajout .edi
+ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.edi'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULT_FOLDER, exist_ok=True)
@@ -35,7 +34,7 @@ def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
         path = os.path.join(dossier, fichier)
         ext = os.path.splitext(fichier)[1].lower()
 
-        if ext in {".txt", ".edi"}:  # <== Synthèse aussi pour .edi
+        if ext in {".txt", ".edi"}:
             with open(path, "r", encoding="utf-8") as f:
                 contenu += f.read() + "\n\n"
         elif ext == ".pdf":
@@ -62,6 +61,7 @@ Langue : Français
 
     return completion.choices[0].message.content
 
+
 @app.route('/delete/<filename>')
 def delete_file(filename):
     file_path = os.path.join(app.config["RESULT_FOLDER"], filename)
@@ -72,7 +72,6 @@ def delete_file(filename):
     else:
         flash(f"Le fichier '{filename}' est introuvable.", "danger")
 
-    # Mettre à jour la session pour retirer le fichier de la liste affichée
     if "historique_fichiers" in session and filename in session["historique_fichiers"]:
         session["historique_fichiers"].remove(filename)
 
@@ -113,7 +112,7 @@ def index():
                     basename = os.path.basename(result)
                     nouveaux_fichiers.append(basename)
 
-        # Mise à jour de l'historique (évite les doublons)
+        # Mise à jour de l’historique uniquement pour la synthèse
         historique = set(session.get("historique_fichiers", []))
         historique.update(nouveaux_fichiers)
         session["historique_fichiers"] = list(historique)
@@ -125,6 +124,7 @@ def index():
             except Exception as e:
                 synthese = "Erreur lors de la synthèse IA : " + str(e)
 
+    # ✅ Affichage basé sur les fichiers vraiment présents
     fichiers_actuels = sorted(os.listdir(app.config["RESULT_FOLDER"]))
     return render_template(
         "index.html",
@@ -135,13 +135,10 @@ def index():
 
 @app.route("/reset")
 def reset():
-    # Supprimer les fichiers anonymisés
     for f in os.listdir(RESULT_FOLDER):
         os.remove(os.path.join(RESULT_FOLDER, f))
-
-    # Réinitialiser l'historique en session
     session["historique_fichiers"] = []
-    flash(" Historique réinitialisé avec succès.", "info")
+    flash("Historique réinitialisé avec succès.", "info")
     return redirect(url_for("index"))
 
 
