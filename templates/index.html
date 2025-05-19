@@ -260,6 +260,7 @@ dropZone.addEventListener('drop', e => {
   dropZone.innerHTML = `<p>📂 ${droppedFiles.length} fichier(s) sélectionné(s)</p>`;
 });
 input.addEventListener('change', () => {
+
   droppedFiles = droppedFiles.concat(Array.from(input.files));
 
   if (droppedFiles.length > 0) {
@@ -277,16 +278,16 @@ form.addEventListener('submit', function (e) {
   document.getElementById('loader').style.display = 'block';
   const formData = new FormData();
   droppedFiles.forEach(file => {
-    formData.append('files', file);
+    formData.append('files[]', file);
   });
 
   fetch("/", {
   method: "POST",
   headers: {
     'X-Requested-With': 'XMLHttpRequest'
-    },
-    body: formData
-  })
+  },
+  body: formData
+})
 
     .then(response => response.text())
     .then(html => {
@@ -312,7 +313,6 @@ form.addEventListener('submit', function (e) {
       else if (newSynthese) document.querySelector(".container").appendChild(newSynthese);
 
       dropZone.innerHTML = "<p>🗂️ Glissez ici vos fichiers ou cliquez pour parcourir</p>";
-
       droppedFiles = [];
       input.value = "";
 
