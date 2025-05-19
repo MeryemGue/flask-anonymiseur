@@ -103,7 +103,9 @@ def anonymiser_pdf_ocr(chemin_pdf):
             rotate_pages=True,
             remove_background=True,
             optimize=1,
-            oversample = 200
+            oversample=150,  # 🔽 Réduction de résolution d'entrée
+            skip_big=True,  # ✅ Ignore les pages très lourdes au lieu de crasher
+            jobs=1
         )
         print("✅ OCR terminé :", PDF_OCR)
 
