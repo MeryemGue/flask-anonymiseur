@@ -255,11 +255,13 @@ dropZone.addEventListener('dragleave', () => {
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('bg-light');
-  droppedFiles = Array.from(e.dataTransfer.files);
+  droppedFiles = droppedFiles.concat(Array.from(e.dataTransfer.files));
+
   dropZone.innerHTML = `<p>📂 ${droppedFiles.length} fichier(s) sélectionné(s)</p>`;
 });
 input.addEventListener('change', () => {
-  droppedFiles = Array.from(input.files);
+  droppedFiles = droppedFiles.concat(Array.from(input.files));
+
   if (droppedFiles.length > 0) {
     dropZone.innerHTML = `<p>📂 ${droppedFiles.length} fichier(s) sélectionné(s)</p>`;
   }
@@ -279,9 +281,13 @@ form.addEventListener('submit', function (e) {
   });
 
   fetch("/", {
-    method: "POST",
+  method: "POST",
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest'
+    },
     body: formData
   })
+
     .then(response => response.text())
     .then(html => {
       document.getElementById('loader').style.display = 'none';
@@ -306,6 +312,7 @@ form.addEventListener('submit', function (e) {
       else if (newSynthese) document.querySelector(".container").appendChild(newSynthese);
 
       dropZone.innerHTML = "<p>🗂️ Glissez ici vos fichiers ou cliquez pour parcourir</p>";
+
       droppedFiles = [];
       input.value = "";
 
