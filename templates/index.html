@@ -290,8 +290,15 @@ form.addEventListener('submit', function (e) {
 
       const newContent = doc.querySelector(".mt-4");
       const oldContent = document.querySelector(".mt-4");
-      if (oldContent && newContent) oldContent.replaceWith(newContent);
-      else if (newContent) form.insertAdjacentElement("afterend", newContent);
+      if (oldContent && newContent) {
+        oldContent.replaceWith(newContent);
+      } else if (newContent) {
+        form.insertAdjacentElement("afterend", newContent);
+      } else {
+        console.warn("⚠️ Aucun tableau '.mt-4' trouvé dans la réponse HTML. Rechargement forcé.");
+        window.location.reload(); // ✅ Solution de secours fiable
+      }
+
 
       const newSynthese = doc.querySelector(".card.mb-5");
       const oldSynthese = document.querySelector(".card.mb-5");
