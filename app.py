@@ -125,12 +125,11 @@ def index():
             except Exception as e:
                 synthese = "Erreur lors de la synthèse IA : " + str(e)
 
+    fichiers_actuels = sorted(os.listdir(app.config["RESULT_FOLDER"]))
     return render_template(
         "index.html",
-        #fichiers=session.get("historique_fichiers", []),
-        fichiers=sorted(os.listdir(app.config["RESULT_FOLDER"])),
-
-    synthese=synthese
+        fichiers=fichiers_actuels,
+        synthese=synthese
     )
 
 
