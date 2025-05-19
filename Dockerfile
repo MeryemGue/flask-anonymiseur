@@ -1,9 +1,9 @@
 FROM python:3.10-slim
 
-# === Install dependencies for OCR ===
+# Installer tesseract + langues
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
-    tesseract-ocr-fra\
+    tesseract-ocr-fra \
     ghostscript \
     unpaper \
     libjpeg-dev \
@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+RUN tesseract --list-langs
 
 
 # === Crée un dossier de travail ===
@@ -31,6 +32,7 @@ EXPOSE 8080
 
 # === Commande pour lancer Flask (tu peux adapter) ===
 CMD ["python", "app.py"]
+
 
 
 
