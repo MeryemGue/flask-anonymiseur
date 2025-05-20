@@ -1,7 +1,6 @@
 FROM python:3.10
 
-
-# === Installer Tesseract + dépendances OCRmypdf + optimiseurs ===
+# Installer Tesseract + OCRmyPDF deps + outils d’optimisation
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-fra \
@@ -15,23 +14,17 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     curl \
     pngquant \
-    jbig2enc \
+    libjbig2dec0 \
     && rm -rf /var/lib/apt/lists/*
 
-# (Optionnel) Vérifier la liste des langues OCR
+# Afficher les langues tesseract installées (debug)
 RUN tesseract --list-langs
 
-# === Crée un dossier de travail ===
 WORKDIR /app
-
-# === Copier les fichiers de l'app ===
 COPY . /app
 
-# === Installer les dépendances Python ===
 RUN pip install --no-cache-dir -r requirements.txt
 
-# === Port d’écoute Railway (PORT fourni en env) ===
 EXPOSE 8080
 
-# === Commande pour lancer Flask avec Gunicorn ===
 CMD ["gunicorn", "app:app", "--workers=2", "--threads=4", "--timeout=120", "--bind=0.0.0.0:8080"]
