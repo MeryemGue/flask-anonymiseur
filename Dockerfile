@@ -31,7 +31,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8080
 
 # === Commande pour lancer Flask (tu peux adapter) ===
-CMD ["python", "app.py"]
+
+CMD ["gunicorn", "app:app", "--workers=2", "--threads=4", "--timeout=120", "--bind=0.0.0.0:8080"]
+
 
 
 
