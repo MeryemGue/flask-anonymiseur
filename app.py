@@ -144,14 +144,17 @@ def reset():
 
 @app.route('/download/<filename>')
 def download_file(filename):
+    full_path = os.path.join(RESULT_FOLDER, filename)
+    if not os.path.exists(full_path):
+        print(f"❌ Fichier demandé introuvable : {filename}")
+        return "Fichier non trouvé", 404
     return send_from_directory(
-        directory=RESULT_FOLDER,
-        path=filename,
+        RESULT_FOLDER,
+        filename,
         as_attachment=False,
-        mimetype="application/pdf",
-        conditional=True  # ✅ important pour streaming
+        mimetype='application/pdf',
+        conditional=True  # ✅ active le streaming (partial download)
     )
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
