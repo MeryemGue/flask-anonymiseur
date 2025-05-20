@@ -5,7 +5,7 @@ import pandas as pd
 from faker import Faker
 import spacy
 import ocrmypdf
-
+from multiprocessing import Process, Queue
 import hashlib
 from datetime import datetime
 
@@ -89,14 +89,12 @@ def anonymiser_fichier_fec(chemin_fichier):
 
 # === PDF OCR ===
 
-def anonymiser_pdf_ocr(chemin_pdf):
-    try:
-        PDF_OCR = chemin_pdf.replace(".pdf", "_OCR.pdf")
-        PDF_SORTIE = os.path.join(DOSSIER_ANONYMISÉ, "anonymise_" + os.path.basename(chemin_pdf))
 
+def ocr_worker(input_pdf, output_pdf, queue):
+    try:
         ocrmypdf.ocr(
-            chemin_pdf,
-            PDF_OCR,
+            input_pdf,
+            output_pdf,
             language='fra',
             force_ocr=True,
             output_type='pdf',
@@ -107,8 +105,28 @@ def anonymiser_pdf_ocr(chemin_pdf):
             skip_big=20.0,
             oversample=100
         )
+        queue.put("ok")
+    except Exception as e:
+        print("❌ OCR worker failed :", e)
+        queue.put("fail")
 
-        print("✅ OCR terminé :", PDF_OCR)
+def anonymiser_pdf_ocr(chemin_pdf):
+    try:
+        PDF_OCR = chemin_pdf.replace(".pdf", "_OCR.pdf")
+        PDF_SORTIE = os.path.join(DOSSIER_ANONYMISÉ, "anonymise_" + os.path.basename(chemin_pdf))
+
+        queue = Queue()
+        p = Process(target=ocr_worker, args=(chemin_pdf, PDF_OCR, queue))
+        p.start()
+        p.join(timeout=120)  # max 2 min OCR
+
+        if not queue.empty() and queue.get() == "ok":
+            print("✅ OCR terminé :", PDF_OCR)
+        else:
+            print("❌ OCR échoué ou timeout")
+            return None
+
+
 
         # === Règles
         LABELS_SENSIBLES = {"NOM", "ADRESSE", "SIRET", "NSS", "DATE", "CODE_NAF", "URSSAF", "MATRICULE"}
