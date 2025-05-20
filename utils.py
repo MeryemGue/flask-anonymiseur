@@ -161,7 +161,15 @@ def anonymiser_pdf_ocr(chemin_pdf):
                         texte_anonymise = text
 
                         # Détection NLP
-                        doc_spacy = nlp(text)
+                        try:
+                            if text.strip():
+                                doc_spacy = nlp(text)
+                            else:
+                                continue
+                        except Exception as e:
+                            print(f"⛔ Erreur NLP sur : {text[:50]} → {e}")
+                            continue
+
                         for ent in doc_spacy.ents:
                             val = ent.text.strip()
                             label = ent.label_.upper()
@@ -197,6 +205,12 @@ def anonymiser_pdf_ocr(chemin_pdf):
                 page.insert_text((x, y), txt, fontsize=size, color=(0, 0, 0))
 
         doc.save(PDF_SORTIE)
+        if not os.path.exists(PDF_SORTIE) or os.path.getsize(PDF_SORTIE) < 10_000:
+            print(f"❌ PDF OCR mal généré ou vide : {PDF_SORTIE}")
+            return None
+        else:
+            print(f"✅ PDF OCR vérifié (taille = {os.path.getsize(PDF_SORTIE)} octets)")
+
         doc.close()
         print(f"\n✅ PDF anonymisé généré : {PDF_SORTIE} — Total : {total_anonymise} éléments remplacés.")
         return PDF_SORTIE
