@@ -101,10 +101,7 @@ def anonymiser_pdf_ocr(chemin_pdf):
             force_ocr=True,
             output_type='pdf',
             optimize=0,
-            skip_text=False,  # ✅ n'ignore pas le texte existant
-            redo_ocr=True,  # ✅ refait proprement même si du texte existe
             deskew=True,
-            rotate_pages=True,
             remove_background=True,
             oversample=150,
             jobs=1
