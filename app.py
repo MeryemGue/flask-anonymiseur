@@ -144,7 +144,13 @@ def reset():
 
 @app.route('/download/<filename>')
 def download_file(filename):
-    return send_from_directory(RESULT_FOLDER, filename, as_attachment=True)
+    return send_from_directory(
+        directory=RESULT_FOLDER,
+        path=filename,
+        as_attachment=False,
+        mimetype="application/pdf",
+        conditional=True  # ✅ important pour streaming
+    )
 
 
 if __name__ == "__main__":

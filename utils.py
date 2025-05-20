@@ -100,7 +100,7 @@ def anonymiser_pdf_ocr(chemin_pdf):
             language='fra',
             force_ocr=True,
             output_type='pdf',
-            optimize=0,
+            optimize=1,
             deskew=True,
             remove_background=True,
             oversample=150,
