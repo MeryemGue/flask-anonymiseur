@@ -101,10 +101,11 @@ def anonymiser_pdf_ocr(chemin_pdf):
             force_ocr=True,
             output_type='pdf',
             optimize=1,
-            deskew=True,
-            remove_background=True,
-            oversample=150,
-            jobs=1
+            deskew=False,  # 🔽 désactive le redressement (gourmand)
+            remove_background=False,  # 🔽 désactive le nettoyage
+            jobs=1,  # 🔽 important : limite à 1 thread
+            skip_big=20.0,  # 🔽 ignore trop gros fichiers/images
+            oversample=100  # 🔽 moins de DPI = moins de RAM
         )
 
         print("✅ OCR terminé :", PDF_OCR)
