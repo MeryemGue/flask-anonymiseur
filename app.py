@@ -1,3 +1,5 @@
+import time
+
 import fitz
 from flask import Flask, render_template, request, send_from_directory, flash, url_for, session
 import os
@@ -88,7 +90,7 @@ def index():
 
     if request.method == "POST":
         files = request.files.getlist("files[]")
-        for file in files:
+        for i, file in enumerate(files):
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 path = os.path.join(UPLOAD_FOLDER, filename)
@@ -112,6 +114,9 @@ def index():
                     basename = os.path.basename(result)
                     nouveaux_fichiers.append(basename)
 
+            # 🔽 Pause de 5 secondes pour libérer la mémoire entre fichiers
+            if i < len(files) - 1:
+                time.sleep(5)
         # Mise à jour de l’historique uniquement pour la synthèse
         historique = set(session.get("historique_fichiers", []))
         historique.update(nouveaux_fichiers)
