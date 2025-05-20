@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Installer tesseract + langues
+# === Installer Tesseract + dépendances OCRmypdf + optimiseurs ===
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-fra \
@@ -13,10 +13,12 @@ RUN apt-get update && apt-get install -y \
     libopenjp2-7-dev \
     poppler-utils \
     curl \
+    pngquant \
+    jbig2enc \
     && rm -rf /var/lib/apt/lists/*
 
+# (Optionnel) Vérifier la liste des langues OCR
 RUN tesseract --list-langs
-
 
 # === Crée un dossier de travail ===
 WORKDIR /app
@@ -30,11 +32,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # === Port d’écoute Railway (PORT fourni en env) ===
 EXPOSE 8080
 
-# === Commande pour lancer Flask (tu peux adapter) ===
-
+# === Commande pour lancer Flask avec Gunicorn ===
 CMD ["gunicorn", "app:app", "--workers=2", "--threads=4", "--timeout=120", "--bind=0.0.0.0:8080"]
-
-
-
-
-
