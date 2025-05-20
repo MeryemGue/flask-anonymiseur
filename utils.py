@@ -98,15 +98,15 @@ def anonymiser_pdf_ocr(chemin_pdf):
             chemin_pdf,
             PDF_OCR,
             language='fra',
-            deskew=True,
             force_ocr=True,
+            output_type='pdf',  # ❗ éviter PDF/A
+            skip_text=True,  # ❗ ignore texte déjà présent (si illisible)
+            optimize=0,  # ❗ éviter sur-optimisation
+            deskew=True,
             rotate_pages=True,
-            remove_background=True,
-            optimize=1,
-            oversample=150,  # 🔽 Réduction de résolution d'entrée
-            skip_big=20.0, # Limite à 40 millions de pixels ≈ 3167x3167 pixels
-            jobs=1
+            remove_background=True
         )
+
         print("✅ OCR terminé :", PDF_OCR)
 
         # === Règles
