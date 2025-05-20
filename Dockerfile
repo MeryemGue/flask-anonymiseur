@@ -1,4 +1,5 @@
-FROM python:3.10-slim
+FROM python:3.10
+
 
 # === Installer Tesseract + dépendances OCRmypdf + optimiseurs ===
 RUN apt-get update && apt-get install -y \
