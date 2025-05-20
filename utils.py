@@ -98,10 +98,9 @@ def anonymiser_pdf_ocr(chemin_pdf):
             chemin_pdf,
             PDF_OCR,
             language='fra',
-            force_ocr=True,
-            output_type='pdf',  # ❗ éviter PDF/A
-            skip_text=True,  # ❗ ignore texte déjà présent (si illisible)
-            optimize=0,  # ❗ éviter sur-optimisation
+            force_ocr=True,  # ✅ forcer l'OCR même si du texte existe
+            output_type='pdf',  # ✅ pour éviter PDF/A
+            optimize=0,  # ✅ pas de recompression
             deskew=True,
             rotate_pages=True,
             remove_background=True
