@@ -205,13 +205,19 @@ def anonymiser_pdf_ocr(chemin_pdf):
                 page.insert_text((x, y), txt, fontsize=size, color=(0, 0, 0))
 
         doc.save(PDF_SORTIE)
-        if not os.path.exists(PDF_SORTIE) or os.path.getsize(PDF_SORTIE) < 10_000:
-            print(f"❌ PDF OCR mal généré ou vide : {PDF_SORTIE}")
-            return None
-        else:
-            print(f"✅ PDF OCR vérifié (taille = {os.path.getsize(PDF_SORTIE)} octets)")
-
         doc.close()
+
+        # ✅ Vérification post-save
+        if not os.path.exists(PDF_SORTIE):
+            print(f"❌ Le fichier PDF anonymisé OCR n’a pas été généré : {PDF_SORTIE}")
+            return None
+
+        size = os.path.getsize(PDF_SORTIE)
+        print(f"📄 Taille finale PDF OCR : {size} octets")
+
+        if size < 5000:
+            print("⚠️ Fichier trop léger, peut être vide ou corrompu.")
+            return None
         print(f"\n✅ PDF anonymisé généré : {PDF_SORTIE} — Total : {total_anonymise} éléments remplacés.")
         return PDF_SORTIE
 

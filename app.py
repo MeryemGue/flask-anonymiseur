@@ -142,14 +142,19 @@ def reset():
     return redirect(url_for("index"))
 
 
-@app.route('/download/<filename>')
+
 @app.route('/download/<filename>')
 def download_file(filename):
     full_path = os.path.join(RESULT_FOLDER, filename)
     if not os.path.exists(full_path):
         print(f"❌ Fichier demandé introuvable : {filename}")
         return "Fichier non trouvé", 404
-    return send_from_directory(RESULT_FOLDER, filename, mimetype='application/pdf')
+    return send_from_directory(
+        RESULT_FOLDER,
+        filename,
+        as_attachment=False,                # ✅ ← on garde false pour ouverture dans l'onglet
+        mimetype="application/pdf"          # ✅ ← indispensable pour navigateur
+    )
 
 
 if __name__ == "__main__":
