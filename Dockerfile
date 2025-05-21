@@ -27,9 +27,6 @@ COPY . /app
 # === Dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Permet d’utiliser le swap si la RAM est trop faible
---memory=1024m --memory-swap=2048m
-
 
 # === Exposition du port
 EXPOSE 8080
