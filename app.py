@@ -1,5 +1,5 @@
 import time
-
+from flask import Response, send_file
 import fitz
 from flask import Flask, render_template, request, send_from_directory, flash, url_for, session
 import os
@@ -147,10 +147,27 @@ def reset():
     return redirect(url_for("index"))
 
 
-@app.route('/download/<filename>')
 def download_file(filename):
-    return send_from_directory(RESULT_FOLDER, filename, as_attachment=True)
+    file_path = os.path.join("uploads", filename)
+    if not os.path.exists(file_path):
+        return "Fichier introuvable", 404
 
+    def generate():
+        with open(file_path, "rb") as f:
+            while True:
+                chunk = f.read(8192)
+                if not chunk:
+                    break
+                yield chunk
+
+    return Response(
+        generate(),
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Content-Type": "application/pdf",
+        },
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
