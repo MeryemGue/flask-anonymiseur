@@ -110,14 +110,23 @@ def index():
 
                     if result and os.path.exists(result):
                         import shutil
-                        try:
-                            shutil.copy(result, os.path.join("static", "anonymises", os.path.basename(result)))
-                        except Exception as e:
-                            print(f"❌ Erreur lors de la copie vers /static/anonymises : {e}")
 
-            # 🔽 Pause de 5 secondes pour libérer la mémoire entre fichiers
-            if i < len(files) - 1:
-                time.sleep(5)
+                        # ✅ Crée le dossier static/anonymises s'il n'existe pas
+                        os.makedirs("static/anonymises", exist_ok=True)
+
+                        # ✅ Copie vers le dossier statique
+                        destination = os.path.join("static", "anonymises", os.path.basename(result))
+                        shutil.copy(result, destination)
+
+                        # ✅ Ajoute au suivi de nouveaux fichiers
+                        nouveaux_fichiers.append(os.path.basename(result))
+
+                except Exception as e :
+                    print(f"❌ Erreur traitement du fichier {filename} : {e}")
+
+                    # 🔽 Pause mémoire
+                if i < len(files) - 1:
+                    time.sleep(5)
         # Mise à jour de l’historique uniquement pour la synthèse
         historique = set(session.get("historique_fichiers", []))
         historique.update(nouveaux_fichiers)
