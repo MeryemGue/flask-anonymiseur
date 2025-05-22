@@ -112,7 +112,8 @@
             <td><input type="checkbox" class="file-checkbox" value="{{ file }}"></td>
             <td class="filename-cell">{{ file }}</td>
             <td class="text-center">
-              <a href="{{ url_for('download_file', filename=file) }}" class="btn btn-sm btn-success">Télécharger</a>
+              <a href="{{ url_for('static', filename='anonymises/' + file) }}" class="btn btn-sm btn-success" download>Télécharger</a>
+
               <a href="{{ url_for('delete_file', filename=file) }}" class="btn btn-sm btn-danger ms-1">Supprimer</a>
             </td>
           </tr>
@@ -207,7 +208,7 @@ function attachCheckboxAndDownloadEvents() {
       }
       selected.forEach(filename => {
         const link = document.createElement('a');
-        link.href = `/download/${encodeURIComponent(filename)}`;
+        link.href = `/static/anonymises/${encodeURIComponent(filename)}`;
         link.download = filename;
         link.style.display = 'none';
         document.body.appendChild(link);

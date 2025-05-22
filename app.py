@@ -13,7 +13,9 @@ app = Flask(__name__)
 app.secret_key = 'xpert-ia-secret'
 
 UPLOAD_FOLDER = 'uploads'
-RESULT_FOLDER = 'fichiers_anonymises'
+#RESULT_FOLDER = 'fichiers_anonymises'
+RESULT_FOLDER = os.path.join("static", "anonymises")
+
 ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.edi'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
