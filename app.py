@@ -1,7 +1,7 @@
 import time
 
 import fitz
-from flask import Flask, render_template, request, send_from_directory, flash, url_for, session, Response
+from flask import Flask, render_template, request, send_from_directory, flash, url_for, session
 import os
 from werkzeug.utils import secure_filename, redirect
 from dotenv import load_dotenv
@@ -148,19 +148,26 @@ def reset():
     return redirect(url_for("index"))
 
 
+from flask import Response
+
 @app.route('/download/<filename>')
 def download_file(filename):
     file_path = os.path.join(app.config["RESULT_FOLDER"], filename)
     try:
-        with open(file_path, 'rb') as f:
-            data = f.read()
+        def generate():
+            with open(file_path, "rb") as f:
+                while chunk := f.read(8192):
+                    yield chunk
         return Response(
-            data,
+            generate(),
             mimetype="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "application/octet-stream"
+            }
         )
     except Exception as e:
-        print(f"❌ Erreur téléchargement : {e}")
+        print(f"❌ Erreur lors du téléchargement : {e}")
         flash(f"Erreur lors du téléchargement du fichier {filename}.", "danger")
         return redirect(url_for("index"))
 
