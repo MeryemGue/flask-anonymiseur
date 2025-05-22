@@ -148,9 +148,17 @@ def reset():
     return redirect(url_for("index"))
 
 
+from flask import send_file
+
 @app.route('/download/<filename>')
 def download_file(filename):
-    return send_from_directory(RESULT_FOLDER, filename, as_attachment=True)
+    file_path = os.path.join(app.config["RESULT_FOLDER"], filename)
+    try:
+        return send_file(file_path, as_attachment=True, conditional=False)
+    except Exception as e:
+        print(f"❌ Erreur téléchargement : {e}")
+        flash(f"Erreur lors du téléchargement du fichier {filename}.", "danger")
+        return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
