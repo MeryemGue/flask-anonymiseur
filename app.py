@@ -107,16 +107,13 @@ def index():
                         result = anonymiser_fichier_dsn(path)
                     else:
                         result = None
-                except Exception as e:
-                    print(f"❌ Erreur lors du traitement du fichier {filename} : {e}")
-                    result = None
 
-                if result and os.path.exists(result):
-                    import shutil
-                    try:
-                        shutil.copy(result, os.path.join("static", "anonymises", os.path.basename(result)))
-                    except Exception as e:
-                        print(f"❌ Erreur lors de la copie vers /static/anonymises : {e}")
+                    if result and os.path.exists(result):
+                        import shutil
+                        try:
+                            shutil.copy(result, os.path.join("static", "anonymises", os.path.basename(result)))
+                        except Exception as e:
+                            print(f"❌ Erreur lors de la copie vers /static/anonymises : {e}")
 
             # 🔽 Pause de 5 secondes pour libérer la mémoire entre fichiers
             if i < len(files) - 1:
