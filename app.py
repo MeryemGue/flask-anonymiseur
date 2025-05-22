@@ -13,25 +13,15 @@ app = Flask(__name__)
 app.secret_key = 'xpert-ia-secret'
 
 UPLOAD_FOLDER = 'uploads'
-#RESULT_FOLDER = 'fichiers_anonymises'
-result = os.path.join("static", "anonymises")
-
-if result and os.path.exists(result):
-    destination = os.path.join("static", "anonymises", os.path.basename(result))
-    try:
-        import shutil
-        shutil.copy(result, destination)
-    except Exception as e:
-        print(f"Erreur lors de la copie dans /static/anonymises : {e}")
-
+RESULT_FOLDER = 'fichiers_anonymises'
 
 ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.edi'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(result, exist_ok=True)
+os.makedirs(RESULT_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['RESULT_FOLDER'] = result
+app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
 
 def allowed_file(filename):
