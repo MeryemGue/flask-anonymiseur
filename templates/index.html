@@ -112,7 +112,7 @@
             <td><input type="checkbox" class="file-checkbox" value="{{ file }}"></td>
             <td class="filename-cell">{{ file }}</td>
             <td class="text-center">
-              <a href="{{ url_for('download_file', filename=file) }}" class="btn btn-sm btn-success">Télécharger</a>
+              <a href="{{ url_for('static', filename='anonymises/' + file) }}" download class="btn btn-sm btn-success">Télécharger</a>
               <a href="{{ url_for('delete_file', filename=file) }}" class="btn btn-sm btn-danger ms-1">Supprimer</a>
             </td>
           </tr>
