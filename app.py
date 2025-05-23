@@ -1,6 +1,5 @@
 import time
-from supabase import create_client
-import os
+
 import fitz
 from flask import Flask, render_template, request, send_from_directory, flash, url_for, session
 import os
@@ -15,7 +14,6 @@ app.secret_key = 'xpert-ia-secret'
 
 UPLOAD_FOLDER = 'uploads'
 RESULT_FOLDER = 'fichiers_anonymises'
-
 ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.edi'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -24,19 +22,6 @@ os.makedirs(RESULT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
-
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-def upload_to_supabase(local_path, remote_filename):
-    with open(local_path, "rb") as f:
-        supabase.storage.from_(SUPABASE_BUCKET).upload(remote_filename, f, {"content-type": "application/pdf"})
-        public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{remote_filename}"
-        return public_url
 
 def allowed_file(filename):
     return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
@@ -112,8 +97,6 @@ def index():
                 file.save(path)
 
                 ext = os.path.splitext(filename)[1].lower()
-                result = None
-
                 try:
                     if ext == ".pdf":
                         result = anonymiser_pdf(path)
@@ -121,26 +104,19 @@ def index():
                         result = anonymiser_fichier_fec(path)
                     elif ext == ".edi":
                         result = anonymiser_fichier_dsn(path)
+                    else:
+                        result = None
                 except Exception as e:
-                    print(f"❌ Erreur anonymisation {filename} : {e}")
+                    print(f"❌ Erreur lors du traitement du fichier {filename} : {e}")
                     result = None
 
-                print(f"📦 Fichier anonymisé généré : {result}")
+                if result:
+                    basename = os.path.basename(result)
+                    nouveaux_fichiers.append(basename)
 
-                if result and isinstance(result, str) and os.path.isfile(result):
-                    try:
-                        public_url = upload_to_supabase(result, os.path.basename(result))
-                        print("📎 Fichier disponible ici :", public_url)
-                        nouveaux_fichiers.append(public_url)
-                    except Exception as e:
-                        print(f"❌ Upload Supabase échoué : {e}")
-                else:
-                    print(f"⚠️ Fichier non trouvé ou vide après anonymisation : {filename}")
-
-            # Pause mémoire (facultatif mais conseillé)
+            # 🔽 Pause de 5 secondes pour libérer la mémoire entre fichiers
             if i < len(files) - 1:
                 time.sleep(5)
-
         # Mise à jour de l’historique uniquement pour la synthèse
         historique = set(session.get("historique_fichiers", []))
         historique.update(nouveaux_fichiers)
@@ -154,8 +130,7 @@ def index():
                 synthese = "Erreur lors de la synthèse IA : " + str(e)
 
     # ✅ Affichage basé sur les fichiers vraiment présents
-    fichiers_actuels = session.get("historique_fichiers", [])
-
+    fichiers_actuels = sorted(os.listdir(app.config["RESULT_FOLDER"]))
     return render_template(
         "index.html",
         fichiers=fichiers_actuels,
@@ -171,6 +146,10 @@ def reset():
     flash("Historique réinitialisé avec succès.", "info")
     return redirect(url_for("index"))
 
+
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_from_directory(RESULT_FOLDER, filename, as_attachment=True)
 
 
 if __name__ == "__main__":
