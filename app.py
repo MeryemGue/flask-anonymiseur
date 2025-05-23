@@ -1,5 +1,6 @@
 import time
-
+from supabase import create_client
+import os
 import fitz
 from flask import Flask, render_template, request, send_from_directory, flash, url_for, session
 import os
@@ -23,6 +24,19 @@ os.makedirs(RESULT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
+
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def upload_to_supabase(local_path, remote_filename):
+    with open(local_path, "rb") as f:
+        supabase.storage.from_(SUPABASE_BUCKET).upload(remote_filename, f, {"content-type": "application/pdf"})
+        public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{remote_filename}"
+        return public_url
 
 def allowed_file(filename):
     return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
@@ -98,6 +112,8 @@ def index():
                 file.save(path)
 
                 ext = os.path.splitext(filename)[1].lower()
+                result = None
+
                 try:
                     if ext == ".pdf":
                         result = anonymiser_pdf(path)
@@ -105,28 +121,26 @@ def index():
                         result = anonymiser_fichier_fec(path)
                     elif ext == ".edi":
                         result = anonymiser_fichier_dsn(path)
-                    else:
-                        result = None
+                except Exception as e:
+                    print(f"❌ Erreur anonymisation {filename} : {e}")
+                    result = None
 
-                    if result and os.path.exists(result):
-                        import shutil
+                print(f"📦 Fichier anonymisé généré : {result}")
 
-                        # ✅ Crée le dossier static/anonymises s'il n'existe pas
-                        os.makedirs("static/anonymises", exist_ok=True)
+                if result and isinstance(result, str) and os.path.isfile(result):
+                    try:
+                        public_url = upload_to_supabase(result, os.path.basename(result))
+                        print("📎 Fichier disponible ici :", public_url)
+                        nouveaux_fichiers.append(public_url)
+                    except Exception as e:
+                        print(f"❌ Upload Supabase échoué : {e}")
+                else:
+                    print(f"⚠️ Fichier non trouvé ou vide après anonymisation : {filename}")
 
-                        # ✅ Copie vers le dossier statique
-                        destination = os.path.join("static", "anonymises", os.path.basename(result))
-                        shutil.copy(result, destination)
+            # Pause mémoire (facultatif mais conseillé)
+            if i < len(files) - 1:
+                time.sleep(5)
 
-                        # ✅ Ajoute au suivi de nouveaux fichiers
-                        nouveaux_fichiers.append(os.path.basename(result))
-
-                except Exception as e :
-                    print(f"❌ Erreur traitement du fichier {filename} : {e}")
-
-                    # 🔽 Pause mémoire
-                if i < len(files) - 1:
-                    time.sleep(5)
         # Mise à jour de l’historique uniquement pour la synthèse
         historique = set(session.get("historique_fichiers", []))
         historique.update(nouveaux_fichiers)
@@ -140,7 +154,8 @@ def index():
                 synthese = "Erreur lors de la synthèse IA : " + str(e)
 
     # ✅ Affichage basé sur les fichiers vraiment présents
-    fichiers_actuels = sorted(os.listdir(app.config["RESULT_FOLDER"]))
+    fichiers_actuels = session.get("historique_fichiers", [])
+
     return render_template(
         "index.html",
         fichiers=fichiers_actuels,
@@ -156,29 +171,6 @@ def reset():
     flash("Historique réinitialisé avec succès.", "info")
     return redirect(url_for("index"))
 
-
-from flask import Response
-
-@app.route('/download/<filename>')
-def download_file(filename):
-    file_path = os.path.join(app.config["RESULT_FOLDER"], filename)
-    try:
-        def generate():
-            with open(file_path, "rb") as f:
-                while chunk := f.read(8192):
-                    yield chunk
-        return Response(
-            generate(),
-            mimetype="application/pdf",
-            headers={
-                "Content-Disposition": f"attachment; filename={filename}",
-                "Content-Type": "application/octet-stream"
-            }
-        )
-    except Exception as e:
-        print(f"❌ Erreur lors du téléchargement : {e}")
-        flash(f"Erreur lors du téléchargement du fichier {filename}.", "danger")
-        return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
