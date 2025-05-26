@@ -4,6 +4,7 @@
   <title>Xpert-IA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
   body {
     background-color: #ffffff; /* fond blanc */
@@ -14,19 +15,29 @@
   }
 
   .drop-zone {
-    border: 2px dashed #7e3ff2; /* violet */
-    padding: 40px;
-    text-align: center;
-    background: white;
-    color: #555;
-    cursor: pointer;
-    border-radius: 10px;
-    transition: background 0.3s ease;
-  }
+  border: 2px dashed #7e3ff2;
+  min-height: 220px;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 50px 20px;
+  text-align: center;
+  background: white;
+  color: #7d7d7d; /* ✅ texte gris à l’intérieur */
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background 0.3s ease;
+}
 
-  .drop-zone:hover {
-    background: #f5edff; /* violet très pâle */
-  }
+.drop-zone:hover {
+  background: #f8f0ff;
+  border-color: #6b2ce6;
+}
+
+.drop-zone-icon {
+  font-size: 3.5rem;
+  color: #7e3ff2;
+  margin-bottom: 15px;
+}
 
   .card pre {
     font-size: 1rem;
@@ -42,6 +53,17 @@
   table td {
     vertical-align: middle !important;
   }
+    .btn-purple {
+  background-color: #7e3ff2;
+  border-color: #7e3ff2;
+  color: white;
+}
+
+.btn-purple:hover {
+  background-color: #6b2ce6;
+  border-color: #6b2ce6;
+}
+
 </style>
 
 </head>
@@ -51,7 +73,12 @@
   <div class="text-center">
     <img src="{{ url_for('static', filename='logo.png') }}" width="300" height="200">
     <h2 class="mt-3 text-purple">Xpert-IA - Anonymiseur intelligent</h2>
-    <p class="lead">Déposez vos fichiers confidentiels à anonymiser automatiquement</p>
+    <p class="lead fw-semibold">
+  Déposez vos fichiers confidentiels à anonymiser automatiquement.<br>
+  <span class="text-muted small">(Seuls les formats PDF, TXT et EDI sont pris en charge)</span>
+
+</p>
+
   </div>
 
   <p class="text-muted fst-italic text-center">
@@ -68,11 +95,12 @@
 
   <form id="upload-form" method="POST" enctype="multipart/form-data" class="mb-4">
     <div class="drop-zone" id="drop-zone">
-      <input type="file" name="files[]" id="file-input" multiple hidden accept=".pdf,.txt">
-      <p>📂 Glissez ici vos fichiers ou cliquez pour parcourir</p>
+      <div class="drop-zone-icon"><i class="fas fa-file-upload"></i></div>
+      <input type="file" name="files[]" id="file-input" multiple hidden accept=".pdf,.txt,.edi">
+      <p class="text-secondary m-0">Glissez et déposez votre fichier ici ou cliquez pour sélectionner</p>
     </div>
     <div class="text-center mt-3">
-      <button type="submit" class="btn btn-primary">🚀 Lancer l'anonymisation</button>
+      <button type="submit" class="btn btn-purple">🚀 Lancer l'anonymisation</button>
       <a href="{{ url_for('reset') }}" class="btn btn-outline-danger ms-2">🗑 Réinitialiser l'historique</a>
     </div>
   </form>
@@ -88,7 +116,7 @@
 
   {% if fichiers %}
   <div class="mt-4">
-    <h4 class="text-primary">📂 Historique des fichiers anonymisés :</h4>
+    <h4 class="text-purple">📂 Historique des fichiers anonymisés :</h4>
 
     <form id="download-form">
       <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
