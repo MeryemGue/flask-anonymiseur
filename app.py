@@ -1,11 +1,11 @@
 import time
-
 import fitz
 from flask import Flask, render_template, request, send_from_directory, flash, url_for, session
 import os
 from werkzeug.utils import secure_filename, redirect
 from dotenv import load_dotenv
 from utils import anonymiser_pdf, anonymiser_fichier_fec, anonymiser_fichier_dsn
+import openai
 
 load_dotenv()
 
@@ -29,6 +29,7 @@ def allowed_file(filename):
 
 def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
     from openai import OpenAI
+
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     contenu = ""
 
