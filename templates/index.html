@@ -63,6 +63,17 @@
   background-color: #6b2ce6;
   border-color: #6b2ce6;
 }
+    .pagination .page-link {
+  color: #7e3ff2;
+  border-color: #7e3ff2;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #7e3ff2;
+  border-color: #7e3ff2;
+  color: white;
+}
+
 
 </style>
 
@@ -165,7 +176,7 @@
 
   {% if synthese %}
     <div class="card mb-5 centered-card">
-      <div class="card-header bg-info text-white">📌 Synthèse IA :</div>
+      <div class="card-header text-white" style="background-color: #7e3ff2;">📌 Synthèse IA :</div>
       <div class="card-body">
         <pre style="white-space: pre-wrap;">{{ synthese }}</pre>
       </div>
