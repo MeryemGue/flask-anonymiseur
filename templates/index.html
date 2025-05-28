@@ -20,13 +20,19 @@
   max-width: 700px;
   margin: 0 auto;
   padding: 50px 20px;
-  text-align: center;
   background: white;
-  color: #7d7d7d; /* ✅ texte gris à l’intérieur */
+  color: #7d7d7d;
   cursor: pointer;
   border-radius: 12px;
   transition: background 0.3s ease;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  flex-direction: column;
 }
+
 
 .drop-zone:hover {
   background: #f8f0ff;
@@ -83,9 +89,9 @@
 <div class="container mt-5">
   <div class="text-center">
     <img src="{{ url_for('static', filename='logo.png') }}" width="300" height="200">
-    <h2 class="mt-3 text-purple">Xpert-IA - Anonymiseur intelligent</h2>
+    <h2 class="mt-3 text-purple">Robot Anonymiseur</h2>
     <p class="lead fw-semibold">
-  Déposez vos fichiers confidentiels à anonymiser automatiquement.<br>
+  Déposez vos fichiers confidentiels à anonymiser automatiquement par l’IA<br>
   <span class="text-muted small">(Seuls les formats PDF, TXT et EDI sont pris en charge pour le moment)</span>
 
 </p>
@@ -94,6 +100,8 @@
 
   <p class="text-muted fst-italic text-center">
     Les fichiers chargés dans l’anonymiseur sont traités strictement localement sur votre disque dur.
+    Aucune data n’est conservée ni exploitée.
+
   </p>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -108,7 +116,7 @@
     <div class="drop-zone" id="drop-zone">
       <div class="drop-zone-icon"><i class="fas fa-file-upload"></i></div>
       <input type="file" name="files[]" id="file-input" multiple hidden accept=".pdf,.txt,.edi">
-      <p class="text-secondary m-0">Glissez et déposez votre fichier ici ou cliquez pour sélectionner</p>
+      <p class="text-secondary m-0">Glissez et déposez vos fichiers ou cliquez ici pour les sélectionner</p>
     </div>
     <div class="text-center mt-3">
       <button type="submit" class="btn btn-purple">🚀 Lancer l'anonymisation</button>
@@ -342,6 +350,22 @@ form.addEventListener('submit', function (e) {
       document.getElementById('loader').style.display = 'none';
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, "text/html");
+        // 🔁 Remplacer les anciennes alertes par les nouvelles
+  const oldAlerts = document.querySelectorAll('.alert');
+  oldAlerts.forEach(el => el.remove());
+
+  const newAlerts = doc.querySelectorAll('.alert');
+  const formParent = form.parentElement;
+  newAlerts.forEach(alert => {
+    formParent.insertBefore(alert, form.nextSibling); // juste après le formulaire
+  });
+
+  // ⏳ Faire disparaître les alertes après 3 secondes
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(alert => alert.remove());
+  }, 3000);
+
+
 
       const newContent = doc.querySelector(".mt-4");
       const oldContent = document.querySelector(".mt-4");

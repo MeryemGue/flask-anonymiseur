@@ -22,6 +22,7 @@ os.makedirs(RESULT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
+MAX_FILE_SIZE_MB = 10
 
 def allowed_file(filename):
     return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
@@ -74,27 +75,47 @@ def index():
     if request.method == "POST":
         files = request.files.getlist("files[]")
         for i, file in enumerate(files):
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                input_path = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(input_path)
+            filename = secure_filename(file.filename)
+            ext = os.path.splitext(filename)[1].lower()
 
-                ext = os.path.splitext(filename)[1].lower()
-                try:
-                    if ext == ".pdf":
-                        result_path = anonymiser_pdf(input_path)
-                    elif ext == ".txt":
-                        result_path = anonymiser_fichier_fec(input_path)
-                    elif ext == ".edi":
-                        result_path = anonymiser_fichier_dsn(input_path)
-                    else:
-                        result_path = None
-                except Exception as e:
-                    print(f"❌ Erreur traitement fichier {filename} : {e}")
-                    result_path = None
+            # Format non supporté
+            if not allowed_file(filename):
+                flash(f"❌ Format non pris en charge : {filename}", "danger")
+                continue
 
-                if result_path:
-                    nouveaux_fichiers.append(os.path.basename(result_path))
+            # Taille trop grande
+            file.seek(0, os.SEEK_END)
+            file_size_mb = file.tell() / (1024 * 1024)
+            file.seek(0)
+            if file_size_mb > MAX_FILE_SIZE_MB:
+                flash(f"❌ Fichier trop volumineux (> {MAX_FILE_SIZE_MB} Mo) : {filename}", "danger")
+                continue
+
+            # Sauvegarde uniquement si tout est valide
+            input_path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(input_path)
+
+            try:
+                if ext == ".pdf":
+                    result_path = anonymiser_pdf(input_path)
+                elif ext == ".txt":
+                    result_path = anonymiser_fichier_fec(input_path)
+                elif ext == ".edi":
+                    result_path = anonymiser_fichier_dsn(input_path)
+                else:
+                    result_path = None  # Ce cas ne devrait jamais arriver
+            except Exception as e:
+                print(f"❌ Erreur traitement fichier {filename} : {e}")
+                result_path = None
+
+            # ✅ Affichage d'une alerte si le traitement échoue
+            if result_path:
+                nouveaux_fichiers.append(os.path.basename(result_path))
+            else:
+                flash(
+                    f"⚠️ Impossible d’anonymiser le fichier {filename} : format scanné ou contenu non exploitable.",
+                    "warning"
+                )
 
             if i < len(files) - 1:
                 time.sleep(2)
