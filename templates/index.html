@@ -352,18 +352,17 @@ form.addEventListener('submit', function (e) {
       const doc = parser.parseFromString(html, "text/html");
         // 🔁 Remplacer les anciennes alertes par les nouvelles
   const oldAlerts = document.querySelectorAll('.alert');
-  oldAlerts.forEach(el => el.remove());
+oldAlerts.forEach(el => el.remove());
 
-  const newAlerts = doc.querySelectorAll('.alert');
-  const formParent = form.parentElement;
-  newAlerts.forEach(alert => {
-    formParent.insertBefore(alert, form.nextSibling); // juste après le formulaire
-  });
+const newAlerts = doc.querySelectorAll('.alert');
+newAlerts.forEach(alert => {
+  form.insertAdjacentElement("beforebegin", alert); // ✅ juste avant le formulaire
+});
 
-  // ⏳ Faire disparaître les alertes après 3 secondes
-  setTimeout(() => {
-    document.querySelectorAll('.alert').forEach(alert => alert.remove());
-  }, 3000);
+// ⏳ Faire disparaître les alertes après 3 secondes
+setTimeout(() => {
+  document.querySelectorAll('.alert').forEach(alert => alert.remove());
+}, 3000);
 
 
 
@@ -374,9 +373,13 @@ form.addEventListener('submit', function (e) {
       } else if (newContent) {
         form.insertAdjacentElement("afterend", newContent);
       } else {
-        console.warn("⚠️ Aucun tableau '.mt-4' trouvé dans la réponse HTML. Rechargement forcé.");
-        window.location.reload(); // ✅ Solution de secours fiable
+        console.warn("⚠️ Aucun tableau '.mt-4' trouvé dans la réponse HTML. Rechargement dans 3 secondes...");
+setTimeout(() => {
+  window.location.reload();
+}, 3000); // Laisse 3 secondes pour afficher l'alerte
+
       }
+
 
 
       const newSynthese = doc.querySelector(".card.mb-5");
@@ -399,13 +402,11 @@ form.addEventListener('submit', function (e) {
 });
 
 window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.querySelectorAll('.alert').forEach(alert => alert.remove());
-  }, 3000);
   attachCheckboxAndDownloadEvents();
   attachFilterEvent();
   paginateTable();
 });
+
 </script>
 
 </body>
