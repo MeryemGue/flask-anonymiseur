@@ -9,6 +9,10 @@ from multiprocessing import Process, Queue
 import hashlib
 from datetime import datetime
 
+import numpy as np
+
+from PIL import Image
+
 import subprocess
 print("🧪 tesseract :", subprocess.getoutput("tesseract --version"))
 print("🧪 ghostscript :", subprocess.getoutput("gs --version"))
@@ -30,7 +34,7 @@ nlp2 = spacy.load(MODELE_PATH2)
 compteur_personne = 1
 compteur_client = 1
 
-# --- Fonctions RGPD conformes ---
+# --- Fonctions anonymisation ---
 def anonymiser_compte(val):
     if pd.notna(val):
         val_str = str(val)
@@ -54,23 +58,33 @@ def anonymiser_client_generique():
     return identifiant
 
 def detecter_separateur(chemin_fichier):
-    with open(chemin_fichier, 'r', encoding='utf-8') as f:
+    with open(chemin_fichier, 'r', encoding='utf-8', errors='ignore') as f:
         ligne = f.readline()
         return "|" if ligne.count("|") > ligne.count("\t") else "\t"
 
+# --- Fonction principale ---
 def anonymiser_fichier_fec(chemin_fichier):
+    global compteur_personne, compteur_client
+    compteur_personne = 1
+    compteur_client = 1
+
     try:
         sep = detecter_separateur(chemin_fichier)
-        df = pd.read_csv(chemin_fichier, sep=sep, dtype=str)
 
-        # Vérification des colonnes
+        # Tentative avec utf-8, sinon latin1
+        try:
+            df = pd.read_csv(chemin_fichier, sep=sep, dtype=str, encoding='utf-8')
+        except UnicodeDecodeError:
+            df = pd.read_csv(chemin_fichier, sep=sep, dtype=str, encoding='latin1')
+
+        # Colonnes à anonymiser
         colonnes_requises = ["CompteNum", "CompteLib", "CompAuxNum", "CompAuxLib", "PieceRef", "EcritureLib"]
         for col in colonnes_requises:
             if col not in df.columns:
-                print(f"Colonne manquante : {col}")
-                return None
+                print(f"⚠️ Colonne manquante : {col} ➤ créée vide.")
+                df[col] = ""
 
-        # Anonymisation conforme RGPD
+        # Anonymisation
         df["CompteNum"] = df["CompteNum"].apply(anonymiser_compte)
         df["CompAuxNum"] = df["CompAuxNum"].apply(anonymiser_compte)
         df["CompteLib"] = df["CompteLib"].apply(lambda x: anonymiser_nom_generique("Client") if pd.notna(x) else x)
@@ -78,13 +92,18 @@ def anonymiser_fichier_fec(chemin_fichier):
         df["PieceRef"] = df["PieceRef"].apply(anonymiser_piece)
         df["EcritureLib"] = df["EcritureLib"].apply(lambda x: "Libellé anonymisé" if pd.notna(x) else x)
 
-        # Enregistrement
+        # Création dossier si nécessaire
+        os.makedirs(DOSSIER_ANONYMISÉ, exist_ok=True)
+
+        # Export anonymisé
         nom_fichier = os.path.basename(chemin_fichier)
         sortie = os.path.join(DOSSIER_ANONYMISÉ, f"anonymise_{nom_fichier}")
-        df.to_csv(sortie, sep=sep, index=False)
+        df.to_csv(sortie, sep=sep, index=False, encoding='utf-8')
+        print(f"✅ Fichier anonymisé enregistré dans : {sortie}")
         return sortie
+
     except Exception as e:
-        print("Erreur d'anonymisation FEC :", str(e))
+        print("❌ Erreur d'anonymisation FEC :", str(e))
         return None
 
 # === PDF OCR ===
