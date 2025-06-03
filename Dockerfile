@@ -28,6 +28,7 @@ COPY . /app
 # === Dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
 
+ENV YOLO_CONFIG_DIR=/tmp/ultralytics_config
 
 # === Exposition du port
 EXPOSE 8080
