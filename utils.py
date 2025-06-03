@@ -8,12 +8,20 @@ import ocrmypdf
 from multiprocessing import Process, Queue
 import hashlib
 from datetime import datetime
-
+import cv2
+from pdf2image import convert_from_path
+from ultralytics import YOLO
 import numpy as np
-
 from PIL import Image
-
 import subprocess
+
+import tempfile
+from docx import Document
+from docx.shared import Inches
+
+from docx2pdf import convert
+
+
 print("🧪 tesseract :", subprocess.getoutput("tesseract --version"))
 print("🧪 ghostscript :", subprocess.getoutput("gs --version"))
 
@@ -28,6 +36,10 @@ nlp = spacy.load(MODELE_PATH)
 
 MODELE_PATH2 = os.path.join(os.path.dirname(__file__), "models", "model-best2")
 nlp2 = spacy.load(MODELE_PATH2)
+
+MODELE_PATH3 = os.path.join(os.path.dirname(__file__), "models", "runs1", "train","signature-detector","weights", "best.pt")
+yolo = YOLO(MODELE_PATH3)
+
 
 # === FEC ===
 # --- Compteurs pour générer des identifiants anonymes ---
@@ -336,28 +348,162 @@ def anonymiser_pdf(chemin_pdf):
             has_text = any(page.get_text().strip() for page in doc)
 
             if has_text:
-                # 🧪 Lire le contenu de la 1ère page
                 texte_page1 = doc[0].get_text().lower()
-                print("📝 Texte page 1 =", texte_page1[:200])  # Affiche les 200 premiers caractères
+                print("📝 Texte page 1 =", texte_page1[:200])
 
-                # ✅ Test : est-ce un contrat ?
                 if "contrat" in texte_page1 and "travail" in texte_page1:
-                    print("📄 Contrat détecté dans PDF simple — anonymisation spéciale")
-                    chemin_sortie = os.path.join(DOSSIER_ANONYMISÉ, f"anonymise_{os.path.basename(chemin_pdf)}")
-                    anonymiser_Contrat(chemin_pdf, chemin_sortie)
-                    return chemin_sortie
+                    print("📄 Contrat détecté — traitement complet")
+                    return anonymiser_contrat_complet(chemin_pdf, is_scanned=False)
 
                 print("📄 PDF simple détecté — Anonymisation bulletin")
                 return anonymiser_pdf_simple(chemin_pdf)
 
             else:
-                print("🖨️ PDF scanné détecté — OCR lancé")
+                # 📸 OCR sur la première page uniquement pour détection
+                from pdf2image import convert_from_path
+                import pytesseract
+
+                images = convert_from_path(chemin_pdf, first_page=1, last_page=1, dpi=300)
+                text_ocr = pytesseract.image_to_string(images[0], lang="fra").lower()
+                print("📝 Texte OCR page 1 =", text_ocr[:200])
+
+                if "contrat" in text_ocr and "travail" in text_ocr:
+                    print("📄 Contrat scanné détecté — traitement complet")
+                    return anonymiser_contrat_complet(chemin_pdf, is_scanned=True)
+
+                print("📄 PDF scanné mais pas contrat — traitement bulletin OCR")
                 return anonymiser_pdf_ocr(chemin_pdf)
 
     except Exception as e:
         print("❌ Erreur lors de la détection du type de PDF :", str(e))
         return None
 
+
+
+def anonymiser_contrat_complet(chemin_pdf, is_scanned=True):
+    print(f"🧾 Chemin reçu : {chemin_pdf}")
+    print(f"🔍 is_scanned ? {is_scanned}")
+    print(f"📤 OCR sortie : {chemin_pdf.replace('.pdf', '_OCR.pdf') if is_scanned else chemin_pdf}")
+    print("📥 Fichier source existe ?", os.path.exists(chemin_pdf))
+
+    try:
+        PDF_OCR = chemin_pdf.replace(".pdf", "_OCR.pdf") if is_scanned else chemin_pdf
+        PDF_TEMP = PDF_OCR.replace(".pdf", "_TEMP.pdf")
+        PDF_FINAL = os.path.join(DOSSIER_ANONYMISÉ, "anonymise_" + os.path.basename(chemin_pdf))
+
+        if is_scanned:
+            print("🔁 Lancement de l'OCR même pour grandes pages...")
+            ocrmypdf.ocr(
+                chemin_pdf,
+                PDF_OCR,
+                language='fra',
+                deskew=True,
+                optimize=1,
+                force_ocr=True,
+                pdf_renderer='sandwich',
+                skip_big=False,  # 👈 Forcer l'OCR même si les pages sont grandes
+                oversample=150  # 👈 Réduit la résolution interne pour éviter des tailles trop élevées
+            )
+
+        # === Règles d’anonymisation
+        LABELS = {"NOM", "ADRESSE", "SIRET", "NSS", "DATE", "CODE_NAF", "ENTREPRISE", "MATRICULE", "URSSAF"}
+        EXCLUSIONS = {
+            "CONTRAT DE TRAVAIL", "A TEMPS COMPLET", "REMUNERATION", "ARTICLE",
+            "NON-CONCURRENCE", "FONCTIONS", "ENGAGEMENT", "ABSENCES", "DEPLACEMENTS"
+        }
+        REGEX_NOM_MANUEL = re.compile(r'\b(Monsieur|Mme|M\.?|Madame)\s+[A-Z][A-Z\-]+(?:\s+[A-Z][A-Z\-]+)?\b', re.IGNORECASE)
+        REGEX_ENTREPRISE_MANUEL = re.compile(r'\b(la société|la sarl|l\'entreprise|le groupe|la sas|la sa)\s+([A-Z&\s\.\'\-]+)', re.IGNORECASE)
+        REGEX_MATRICULE_MANUEL = re.compile(r'\b\d{10,14}\b')
+
+        def corriger_erreurs_ocr(texte):
+            texte = re.sub(r"\s+", " ", texte)
+            corrections = {
+                "N °": "N°", "n °": "n°", "S I R E T": "SIRET", "0 ": "0",
+                "S A R L": "SARL", "S . A . S": "SAS", "S . A": "SA", "N . S . S": "NSS",
+            }
+            for k, v in corrections.items():
+                texte = texte.replace(k, v)
+            return texte.strip()
+
+        # === Étape 1 : Anonymisation texte via spaCy
+        doc = fitz.open(PDF_OCR)
+        for page in doc:
+            blocks = page.get_text("dict")["blocks"]
+            modifications = []
+            for block in blocks:
+                if block['type'] != 0:
+                    continue
+                for line in block['lines']:
+                    spans = line['spans']
+                    full_line = "".join([s['text'] for s in spans])
+                    full_line = corriger_erreurs_ocr(full_line)
+                    doc_spacy = nlp2(full_line)
+                    texte_anonymise = ""
+                    last_idx = 0
+                    used_spans = []
+
+                    for ent in doc_spacy.ents:
+                        if ent.label_ in LABELS and not any(ex in ent.text.upper() for ex in EXCLUSIONS):
+                            texte_anonymise += full_line[last_idx:ent.start_char] + "*******"
+                            last_idx = ent.end_char
+                            used_spans.append((ent.start_char, ent.end_char))
+                    texte_anonymise += full_line[last_idx:]
+
+                    for match in REGEX_NOM_MANUEL.finditer(full_line):
+                        s, e = match.span()
+                        if not any(us <= s < ue or us < e <= ue for us, ue in used_spans):
+                            texte_anonymise = texte_anonymise.replace(match.group(), "*******")
+
+                    for match in REGEX_ENTREPRISE_MANUEL.finditer(full_line):
+                        texte_anonymise = texte_anonymise.replace(match.group(), f"{match.group(1)} *******")
+
+                    for match in REGEX_MATRICULE_MANUEL.finditer(full_line):
+                        s, e = match.span()
+                        if not any(us <= s < ue or us < e <= ue for us, ue in used_spans):
+                            texte_anonymise = texte_anonymise.replace(match.group(), "********")
+
+                    if texte_anonymise != full_line:
+                        for s in spans:
+                            page.add_redact_annot(s['bbox'], fill=(1, 1, 1))
+                        x0, y0 = spans[0]['bbox'][:2]
+                        size = spans[0]['size']
+                        modifications.append((x0, y0, texte_anonymise, size))
+
+            page.apply_redactions()
+            for x0, y0, texte, size in modifications:
+                page.insert_text((x0, y0 + 8), texte, fontsize=size, color=(0, 0, 0))
+
+        doc.save(PDF_TEMP)
+        doc.close()
+
+        # === Étape 2 : Masquage des signatures (YOLO)
+        images = convert_from_path(PDF_TEMP, dpi=300)
+        images_finales = []
+
+        for i, image_pil in enumerate(images):
+            print(f"\n📄 Traitement image page {i + 1}")
+            img_cv = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
+            temp_img = f"temp_page_{i + 1}.jpg"
+            cv2.imwrite(temp_img, img_cv)
+            results = yolo.predict(temp_img, conf=0.25, save=False)[0]
+
+            for box in results.boxes.xyxy.cpu().numpy():
+                x1, y1, x2, y2 = map(int, box)
+                cv2.rectangle(img_cv, (x1, y1), (x2, y2), (255, 255, 255), -1)
+                cv2.putText(img_cv, "[signature masquee]", (x1, y2 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)
+
+            img_pil_final = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
+            images_finales.append(img_pil_final)
+
+        images_finales[0].save(PDF_FINAL, save_all=True, append_images=images_finales[1:])
+        print(f"\n✅ Contrat anonymisé + signatures masquées : {PDF_FINAL}")
+        return PDF_FINAL
+
+    except Exception as e:
+        print("❌ Erreur traitement contrat complet :", e)
+        import traceback
+        traceback.print_exc()
+        return None
 
 
 # === Utilitaires DSN ===
@@ -563,15 +709,162 @@ def anonymiser_Contrat(pdf_ocr_path, pdf_sortie_path):
     print(f"\n✅ PDF anonymisé sauvegardé sous : {pdf_sortie_path}")
 
 
+def anonymiser_word_docx(chemin_docx):
+    """
+    Anonymise un fichier Word (.docx ou .doc), masque les signatures et renvoie
+    le chemin final du fichier anonymisé dans fichiers_anonymises/.
+    Retourne None en cas d'erreur.
+    """
+    try:
+        # ---------- 0. Conversion .doc → .docx ----------
+        def convert_doc_to_docx(fichier_doc):
+            import pythoncom
+            import win32com.client
+
+            pythoncom.CoInitialize()  # Important pour les threads dans Flask
+
+            word = win32com.client.Dispatch("Word.Application")
+            word.Visible = False
+            chemin_absolu = os.path.abspath(fichier_doc)
+            nouveau_fichier = chemin_absolu.replace(".doc", ".docx")
+            doc = word.Documents.Open(chemin_absolu)
+            doc.SaveAs(nouveau_fichier, FileFormat=16)
+            doc.Close()
+            word.Quit()
+
+            pythoncom.CoUninitialize()  # Nettoyage COM
+            return nouveau_fichier
+
+        if chemin_docx.lower().endswith(".doc"):
+            chemin_docx = convert_doc_to_docx(chemin_docx)
+
+        # ---------- 1. Anonymisation texte ----------
+        LABELS_SENSIBLES = {"NOM", "ADRESSE", "SIRET", "NSS", "DATE", "DATE_NAISSANCE", "CODE_NAF", "ENTREPRISE", "MATRICULE", "URSSAF"}
+        PROTECTED_KEYWORDS = [
+            "état récapitulatif", "état prévisionnel", "article L", "article R", "ASSURANCES", "objet",
+            "PROCES-VERBAL DES DELIBERATIONS", "(DPE)", "Code civil", "Code du commerce", "diagnostic de performance énergétique",
+            "L'ASSEMBLEE GENERALE ORDINAIRES", "expropriation", "grosse ou un exemplaire", "decret n° 87-713",
+            "quote-part", "charges locatives", "PREMIERE RESOLUTION", "DEUXIEME RESOLUTION", "TROISIEME RESOLUTION",
+            "QUATRIEME RESOLUTION", "APPROBATION DES COMPTES", "AFFECTATION DU RESULTAT", "CONVENTIONS REGLEMENTEES",
+            "POUVOIR POUR FORMALITES"
+        ]
+        REGEX_NOM_MANUEL = re.compile(r'\b(Monsieur|M\.?|Madame|Mr\.?)\s+[A-Z][a-zéèêàîïç\-]+\s+[A-Z][A-Z\-]+\b')
+        REGEX_PRENOM_NOM = re.compile(r"\b([A-Z][a-zéèêàîïç\-]+)\s+([A-Z]{2,}(?:\s+[A-Z]{2,})?)\b")
+
+        doc = Document(chemin_docx)
+        noms_detectes = set()
+
+        for para in doc.paragraphs:
+            texte = original_text = para.text
+            if any(k.lower() in texte.lower() for k in PROTECTED_KEYWORDS):
+                continue
+
+            doc_spacy = nlp2(texte)
+            new_text, offset, used_spans = texte, 0, []
+
+            for ent in doc_spacy.ents:
+                if ent.label_ in LABELS_SENSIBLES and ent.text.strip() not in ["Madame", "Monsieur"]:
+                    start, end = ent.start_char + offset, ent.end_char + offset
+                    new_text = new_text[:start] + "*" * len(ent.text) + new_text[end:]
+                    offset += len("*" * len(ent.text)) - len(ent.text)
+                    used_spans.append((ent.start_char, ent.end_char))
+                    if ent.label_ == "NOM":
+                        noms_detectes.add(ent.text)
+
+            for match in REGEX_NOM_MANUEL.finditer(texte):
+                matched = match.group().strip()
+                if matched in new_text and not any(s <= match.start() < e or s < match.end() <= e for s, e in used_spans):
+                    new_text = new_text.replace(matched, "*" * len(matched))
+
+            for match in REGEX_PRENOM_NOM.finditer(texte):
+                full_name = match.group().strip()
+                if full_name not in noms_detectes and len(full_name) > 5:
+                    new_text = new_text.replace(full_name, "*" * len(full_name))
+                    noms_detectes.add(full_name)
+
+            match_adresse_full = re.search(r"(Demeurant au\s+[^\n\.]+)", original_text)
+            if match_adresse_full:
+                adresse_expr = match_adresse_full.group(1).strip()
+                if adresse_expr in new_text:
+                    new_text = new_text.replace(adresse_expr, "*" * len(adresse_expr))
+                else:
+                    for fragment in adresse_expr.split(","):
+                        fragment = fragment.strip()
+                        if fragment and fragment in new_text:
+                            new_text = new_text.replace(fragment, "*" * len(fragment))
+
+            if new_text != original_text:
+                print(f"🔒 Paragraphe modifié : {original_text.strip()} ➡️ {new_text.strip()}")
+                para.text = new_text
+
+        # Fichier anonymisé temporaire
+        docx_anonyme = os.path.join(tempfile.gettempdir(), os.path.basename(chemin_docx).replace(".docx", "_anonyme.docx"))
+        doc.save(docx_anonyme)
+
+        # ---------- 2. Conversion vers PDF ----------
+        pdf_temp = os.path.join(tempfile.gettempdir(), "temp_pdf.pdf")
+        import pythoncom
+        import win32com.client
+
+        try:
+            pythoncom.CoInitialize()
+            convert(docx_anonyme, pdf_temp)
+        finally:
+            pythoncom.CoUninitialize()
+
+        # ---------- 3. Masquage des signatures ----------
+        images = convert_from_path(pdf_temp, dpi=300)
+        yolo_detecte_signature = False
+        images_finales = []
+
+        for i, image_pil in enumerate(images):
+            img_cv = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
+            temp_img_path = os.path.join(tempfile.gettempdir(), f"page_{i + 1}.jpg")
+            cv2.imwrite(temp_img_path, img_cv)
+            results = yolo.predict(temp_img_path, conf=0.25, save=False)[0]
+
+            if len(results.boxes) > 0:
+                yolo_detecte_signature = True
+                for box in results.boxes.xyxy.cpu().numpy():
+                    x1, y1, x2, y2 = map(int, box)
+                    cv2.rectangle(img_cv, (x1, y1), (x2, y2), (255, 255, 255), -1)
+                    cv2.putText(img_cv, "[signature masquée]", (x1, y2 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+
+            images_finales.append(Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)))
+
+        # ---------- 4. Génération du fichier final ----------
+        nom_final = os.path.basename(chemin_docx).replace(".docx", "_anonymise.docx")
+        sortie_docx = os.path.join(DOSSIER_ANONYMISÉ, nom_final)
+
+        if not yolo_detecte_signature:
+            os.replace(docx_anonyme, sortie_docx)
+        else:
+            final_docx = Document()
+            for i, image in enumerate(images_finales):
+                temp_image_path = os.path.join(tempfile.gettempdir(), f"masked_page_{i + 1}.jpg")
+                image.save(temp_image_path, "JPEG")
+                final_docx.add_paragraph().add_run().add_picture(temp_image_path, width=Inches(6.5))
+            final_docx.save(sortie_docx)
+
+        print(f"✅ Fichier final enregistré : {sortie_docx}")
+        return sortie_docx
+
+    except Exception as e:
+        print(f"❌ Erreur dans anonymiser_word_docx : {e}")
+        import traceback; traceback.print_exc()
+        return None
 
 def anonymiser_fichier(chemin_fichier):
     ext = os.path.splitext(chemin_fichier)[1].lower()
-    if ext == ".csv" or ext == ".txt":
+
+    if ext in {".csv", ".txt"}:
         return anonymiser_fichier_fec(chemin_fichier)
     elif ext == ".pdf":
         return anonymiser_pdf(chemin_fichier)
     elif ext == ".edi":
         return anonymiser_fichier_dsn(chemin_fichier)
+    elif ext in {".doc", ".docx"}:
+        return anonymiser_word_docx(chemin_fichier)
     else:
         print("❓ Format non pris en charge :", ext)
         return None

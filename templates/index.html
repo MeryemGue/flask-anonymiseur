@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script async defer src="https://apis.google.com/js/api.js"></script>
+  <script async defer src="https://accounts.google.com/gsi/client"></script>
+
   <style>
   body {
     background-color: #ffffff; /* fond blanc */
@@ -146,12 +150,25 @@
             <option value="pdf">PDF</option>
             <option value="txt">TXT</option>
             <option value="edi">EDI</option>
+            <option value="docx">DOCX</option>
           </select>
         </div>
-        <div class="d-flex gap-2">
-          <button type="button" id="download-selected" class="btn btn-primary ">Télécharger les fichiers sélectionnés</button>
-          <button type="button" id="download-all" class="btn btn-success ">Télécharger tout</button>
-        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+  <button type="button" id="analyse-selected" class="btn btn-warning d-flex align-items-center">
+    📊 <span class="ms-2">Analyser les fichiers sélectionnés</span>
+  </button>
+  <button type="button" id="download-selected" class="btn btn-primary">Télécharger les fichiers sélectionnés</button>
+  <div class="dropdown">
+    <button class="btn btn-success dropdown-toggle" type="button" id="downloadAllDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      Télécharger tout
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="downloadAllDropdown">
+      <li><a class="dropdown-item" href="#" id="download-local">💾 Télécharger localement</a></li>
+      <li><a class="dropdown-item" href="#" id="download-drive">☁️ Enregistrer sur Google Drive</a></li>
+    </ul>
+  </div>
+</div>
+
       </div>
 
       <table class="table table-bordered table-hover align-middle" id="file-table">
@@ -407,7 +424,205 @@ window.addEventListener('load', () => {
   paginateTable();
 });
 
-</script>
 
+// 📥 Télécharger localement
+document.getElementById('download-local')?.addEventListener('click', () => {
+  const allRows = document.querySelectorAll('#file-table tbody tr');
+  if (allRows.length === 0) {
+    alert("⚠️ Aucun fichier à télécharger.");
+    return;
+  }
+  allRows.forEach(row => {
+    const filename = row.getAttribute('data-filename');
+    const link = document.createElement('a');
+    link.href = `/download/${encodeURIComponent(filename)}`;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+});
+
+
+let tokenClient;
+let accessToken = null;
+let pickerInited = false;
+
+function onApiLoad() {
+  gapi.load('picker', {'callback': () => pickerInited = true});
+}
+
+function gisLoaded() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: '446549075371-g2hvi8rqpdqvapasll6moop53arkltdr.apps.googleusercontent.com',
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (tokenResponse) => {
+      accessToken = tokenResponse.access_token;
+      uploadAllToDrive();  // ✅ AJOUTER CETTE LIGNE
+    },
+  });
+}
+
+
+function getMimeType(filename) {
+  if (filename.endsWith(".pdf")) return "application/pdf";
+  if (filename.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (filename.endsWith(".doc")) return "application/msword";
+  if (filename.endsWith(".txt")) return "text/plain";
+  if (filename.endsWith(".edi")) return "text/plain";
+  return "application/octet-stream";
+}
+
+function createPicker({ name, blob }) {
+  if (!accessToken) {
+    tokenClient.requestAccessToken();
+    setTimeout(() => createPicker({ name, blob }), 1000);
+    return;
+  }
+
+  const file = new File([blob], name);
+  const metadata = {
+    name: file.name,
+    mimeType: getMimeType(file.name),
+    parents: ['root']
+  };
+
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  form.append('file', file);
+
+  fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+    method: 'POST',
+    headers: new Headers({ Authorization: 'Bearer ' + accessToken }),
+    body: form
+  })
+  .then(async res => {
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("❌ Réponse non OK :", errorText);
+      throw new Error("Échec HTTP : " + res.status);
+    }
+    return res.json();
+  })
+  .then(data => {
+    if (data && data.id) {
+      alert(`✅ Fichier « ${name} » enregistré sur Google Drive (id: ${data.id})`);
+    } else {
+      console.error("⚠️ Réponse inattendue :", data);
+      alert("❌ Échec de l’envoi : aucun ID retourné par Google Drive.");
+    }
+  })
+  .catch(err => {
+    console.error("❌ Erreur d’envoi vers Google Drive :", err);
+    alert("❌ Erreur lors de l’envoi vers Google Drive : " + err.message);
+  });
+}
+
+
+function uploadAllToDrive() {
+  const allRows = document.querySelectorAll('#file-table tbody tr');
+  if (allRows.length === 0) {
+    alert("⚠️ Aucun fichier à transférer.");
+    return;
+  }
+
+  allRows.forEach(row => {
+    const filename = row.getAttribute('data-filename');
+    fetch(`/download/${encodeURIComponent(filename)}`)
+      .then(res => res.blob())
+      .then(blob => {
+        createPicker({ name: filename, blob });
+      })
+      .catch(err => {
+        console.error('Erreur de téléchargement du fichier:', err);
+        alert(`❌ Impossible de récupérer le fichier « ${filename} »`);
+      });
+  });
+}
+
+
+
+document.getElementById('download-drive')?.addEventListener('click', () => {
+  if (!pickerInited) {
+    onApiLoad();
+  }
+
+  tokenClient.callback = (tokenResponse) => {
+    accessToken = tokenResponse.access_token;
+    console.log("✅ Token reçu :", accessToken);
+    uploadAllToDrive();  // ➕ on déclenche ici, une fois le token obtenu
+  };
+
+  tokenClient.requestAccessToken({ prompt: '' });
+});
+
+document.getElementById('analyse-selected')?.addEventListener('click', () => {
+  const selected = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(cb => cb.value);
+  const button = document.getElementById("analyse-selected");
+
+  if (selected.length === 0) {
+    alert("⚠️ Aucun fichier sélectionné pour l'analyse.");
+    return;
+  }
+
+  // ⏳ Change le texte du bouton + désactive
+  const originalHTML = button.innerHTML;
+  button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyse en cours...';
+  button.disabled = true;
+
+  fetch("/analyse", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    body: JSON.stringify({ fichiers: selected })
+  })
+  .then(res => res.json())
+  .then(data => {
+    button.innerHTML = originalHTML;
+    button.disabled = false;
+
+    if (data.success) {
+      const syntheseCard = document.createElement('div');
+      syntheseCard.className = "card mb-5 centered-card";
+      syntheseCard.id = "synthese-ia";
+      syntheseCard.innerHTML = `
+        <div class="card-header text-white" style="background-color: #7e3ff2;">📌 Synthèse IA :</div>
+        <div class="card-body">
+          <pre style="white-space: pre-wrap;">${data.synthese}</pre>
+        </div>
+      `;
+
+      const existing = document.querySelector(".card.mb-5");
+      if (existing) existing.remove();
+      document.querySelector(".container").appendChild(syntheseCard);
+
+      setTimeout(() => {
+        document.getElementById("synthese-ia")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    } else {
+      alert("❌ Échec de l’analyse : " + data.error);
+    }
+  })
+  .catch(err => {
+    button.innerHTML = originalHTML;
+    button.disabled = false;
+    alert("❌ Erreur réseau : " + err);
+  });
+});
+
+</script>
+<script>
+  window.addEventListener('load', () => {
+    if (typeof gapi !== 'undefined') {
+      onApiLoad();
+    }
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+      gisLoaded();
+    }
+  });
+</script>
 </body>
 </html>

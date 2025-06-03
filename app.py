@@ -4,17 +4,22 @@ from flask import Flask, render_template, request, send_file, flash, url_for, se
 import os
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
-from utils import anonymiser_pdf, anonymiser_fichier_fec, anonymiser_fichier_dsn
+from utils import anonymiser_pdf, anonymiser_fichier_fec, anonymiser_fichier_dsn, anonymiser_word_docx
+from google_oauth import bp_google
+
+
+
 import openai
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'xpert-ia-secret'
-
+app.register_blueprint(bp_google)
 UPLOAD_FOLDER = 'uploads'
 RESULT_FOLDER = 'fichiers_anonymises'
-ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.edi'}
+ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.edi', '.docx','.doc'}
+
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULT_FOLDER, exist_ok=True)
@@ -28,8 +33,11 @@ def allowed_file(filename):
     return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
 
 
+
+
+client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
 def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
-    openai.api_key = os.environ.get("OPENAI_API_KEY")
     contenu = ""
 
     for fichier in fichiers_anonymises:
@@ -55,13 +63,13 @@ Génère une synthèse professionnelle et structurée comportant et ignorant les
 Langue : Français
 """
 
-    completion = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7
     )
 
-    return completion.choices[0].message.content
+    return response.choices[0].message.content
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -84,12 +92,12 @@ def index():
                 continue
 
             # Taille trop grande
-            file.seek(0, os.SEEK_END)
-            file_size_mb = file.tell() / (1024 * 1024)
-            file.seek(0)
-            if file_size_mb > MAX_FILE_SIZE_MB:
-                flash(f"❌ Fichier trop volumineux (> {MAX_FILE_SIZE_MB} Mo) : {filename}", "danger")
-                continue
+            # file.seek(0, os.SEEK_END)
+            # file_size_mb = file.tell() / (1024 * 1024)
+            # file.seek(0)
+            # if file_size_mb > MAX_FILE_SIZE_MB:
+            #     flash(f"❌ Fichier trop volumineux (> {MAX_FILE_SIZE_MB} Mo) : {filename}", "danger")
+            #     continue
 
             # Sauvegarde uniquement si tout est valide
             input_path = os.path.join(UPLOAD_FOLDER, filename)
@@ -102,8 +110,12 @@ def index():
                     result_path = anonymiser_fichier_fec(input_path)
                 elif ext == ".edi":
                     result_path = anonymiser_fichier_dsn(input_path)
+                elif ext in {".doc", ".docx"}:
+                    result_path = anonymiser_word_docx(input_path)
+
                 else:
-                    result_path = None  # Ce cas ne devrait jamais arriver
+                    result_path = None
+
             except Exception as e:
                 print(f"❌ Erreur traitement fichier {filename} : {e}")
                 result_path = None
@@ -124,14 +136,21 @@ def index():
         historique.update(nouveaux_fichiers)
         session["historique_fichiers"] = list(historique)
 
-        if nouveaux_fichiers:
-            try:
-                synthese = generer_synthese_llm(nouveaux_fichiers)
-            except Exception as e:
-                synthese = "Erreur lors de la synthèse IA : " + str(e)
 
     fichiers_actuels = sorted(os.listdir(app.config["RESULT_FOLDER"]))
     return render_template("index.html", fichiers=fichiers_actuels, synthese=synthese)
+from flask import jsonify
+
+@app.route("/analyse", methods=["POST"])
+def analyse_files():
+    data = request.json
+    fichiers = data.get("fichiers", [])
+
+    try:
+        synthese = generer_synthese_llm(fichiers)
+        return jsonify({"success": True, "synthese": synthese})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 
 @app.route("/download/<filename>")
