@@ -455,7 +455,7 @@ function onApiLoad() {
 
 function gisLoaded() {
   tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: '446549075371-g2hvi8rqpdqvapasll6moop53arkltdr.apps.googleusercontent.com',
+    client_id: credentials.client_id,
     scope: 'https://www.googleapis.com/auth/drive.file',
     callback: (tokenResponse) => {
       accessToken = tokenResponse.access_token;

@@ -32,9 +32,6 @@ MAX_FILE_SIZE_MB = 10
 def allowed_file(filename):
     return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
 
-
-
-
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
