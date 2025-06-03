@@ -32,7 +32,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # === Exposition du port
 EXPOSE 8080
 
+
+
 # === Lancer l'app
 
-CMD ["gunicorn", "app:app", "--workers=1", "--threads=1", "--timeout=300", "--bind=0.0.0.0:8080", "--no-sendfile"]
+CMD ["gunicorn", "app:app", "--workers=2", "--threads=4", "--timeout=300", "--bind=0.0.0.0:8080", "--preload", "--no-sendfile", "--log-level=debug"]
 
