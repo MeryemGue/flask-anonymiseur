@@ -10,7 +10,7 @@ import pathlib
 bp_google = Blueprint('google_oauth', __name__)
 
 # === Configuration ===
-CLIENT_SECRETS_FILE = "credentials.json"
+CLIENT_SECRETS_FILE = os.environ.get("GOOGLE_CREDENTIALS_PATH", "credentials.json")
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:8080/oauth2callback")
 print("Redirect URI utilisé :", REDIRECT_URI)

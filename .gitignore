@@ -1,4 +1,6 @@
 # Byte-compiled / cache
+credentials.json
+
 __pycache__/
 *.py[cod]
 *.pyc
