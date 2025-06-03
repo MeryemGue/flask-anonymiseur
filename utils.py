@@ -711,32 +711,13 @@ def anonymiser_Contrat(pdf_ocr_path, pdf_sortie_path):
 
 def anonymiser_word_docx(chemin_docx):
     """
-    Anonymise un fichier Word (.docx ou .doc), masque les signatures et renvoie
-    le chemin final du fichier anonymisé dans fichiers_anonymises/.
-    Retourne None en cas d'erreur.
+    Anonymise un fichier Word (.docx uniquement), masque les signatures
+    et retourne le chemin du fichier anonymisé.
     """
     try:
-        # ---------- 0. Conversion .doc → .docx ----------
-        def convert_doc_to_docx(fichier_doc):
-            import pythoncom
-            import win32com.client
-
-            pythoncom.CoInitialize()  # Important pour les threads dans Flask
-
-            word = win32com.client.Dispatch("Word.Application")
-            word.Visible = False
-            chemin_absolu = os.path.abspath(fichier_doc)
-            nouveau_fichier = chemin_absolu.replace(".doc", ".docx")
-            doc = word.Documents.Open(chemin_absolu)
-            doc.SaveAs(nouveau_fichier, FileFormat=16)
-            doc.Close()
-            word.Quit()
-
-            pythoncom.CoUninitialize()  # Nettoyage COM
-            return nouveau_fichier
-
-        if chemin_docx.lower().endswith(".doc"):
-            chemin_docx = convert_doc_to_docx(chemin_docx)
+        if chemin_docx.lower().endswith(".doc") and not chemin_docx.lower().endswith(".docx"):
+            print("❌ Format .doc non supporté. Veuillez convertir ce fichier en .docx.")
+            return None
 
         # ---------- 1. Anonymisation texte ----------
         LABELS_SENSIBLES = {"NOM", "ADRESSE", "SIRET", "NSS", "DATE", "DATE_NAISSANCE", "CODE_NAF", "ENTREPRISE", "MATRICULE", "URSSAF"}
@@ -797,22 +778,17 @@ def anonymiser_word_docx(chemin_docx):
                 print(f"🔒 Paragraphe modifié : {original_text.strip()} ➡️ {new_text.strip()}")
                 para.text = new_text
 
-        # Fichier anonymisé temporaire
+        # Fichier docx anonymisé
         docx_anonyme = os.path.join(tempfile.gettempdir(), os.path.basename(chemin_docx).replace(".docx", "_anonyme.docx"))
         doc.save(docx_anonyme)
 
-        # ---------- 2. Conversion vers PDF ----------
+        # ---------- 2. Conversion en images pour traitement YOLO ----------
         pdf_temp = os.path.join(tempfile.gettempdir(), "temp_pdf.pdf")
-        import pythoncom
-        import win32com.client
+        subprocess.run(
+            ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", os.path.dirname(pdf_temp), docx_anonyme],
+            check=True
+        )
 
-        try:
-            pythoncom.CoInitialize()
-            convert(docx_anonyme, pdf_temp)
-        finally:
-            pythoncom.CoUninitialize()
-
-        # ---------- 3. Masquage des signatures ----------
         images = convert_from_path(pdf_temp, dpi=300)
         yolo_detecte_signature = False
         images_finales = []
@@ -832,7 +808,7 @@ def anonymiser_word_docx(chemin_docx):
 
             images_finales.append(Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)))
 
-        # ---------- 4. Génération du fichier final ----------
+        # ---------- 3. Génération du fichier final ----------
         nom_final = os.path.basename(chemin_docx).replace(".docx", "_anonymise.docx")
         sortie_docx = os.path.join(DOSSIER_ANONYMISÉ, nom_final)
 
@@ -853,6 +829,7 @@ def anonymiser_word_docx(chemin_docx):
         print(f"❌ Erreur dans anonymiser_word_docx : {e}")
         import traceback; traceback.print_exc()
         return None
+
 
 def anonymiser_fichier(chemin_fichier):
     ext = os.path.splitext(chemin_fichier)[1].lower()

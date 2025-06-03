@@ -2,6 +2,7 @@ FROM python:3.10
 
 # Installer Tesseract + OCRmyPDF deps + outils d’optimisation
 RUN apt-get update && apt-get install -y \
+    libreoffice \
     tesseract-ocr \
     tesseract-ocr-fra \
     ghostscript \
