@@ -50,12 +50,17 @@ def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
             doc.close()
 
     prompt = f"""
-Voici des documents anonymisés :
+
 
 {contenu[:3000]}
 
-Génère une synthèse professionnelle et structurée comportant et ignorant les données personnelles :
-- Présentation claire avec titres ou bullet points si pertinent
+Tu es un expert-comptable spécialisé en analyse financière. Analyse le fichier FEC ci-joint (Fichier des Écritures Comptables) et génère un rapport clair et structuré. Commence par donner un résumé global de l’activité comptable : période couverte, nombre d’écritures, types de journaux et principales classes comptables utilisées.
+
+Détaille ensuite les principales charges et produits en identifiant les comptes les plus fréquents et les variations importantes. Analyse les flux de trésorerie à partir des comptes bancaires : montants entrants et sortants, soldes par compte.
+
+Repère les anomalies ou irrégularités potentielles comme les doublons, les incohérences de dates, ou les écritures comptables anormales. Si les données le permettent, propose des indicateurs financiers simples comme le taux de marge brute, la part des charges fixes ou variables, ou la concentration des ventes.
+
+Termine par des recommandations ou des axes d’amélioration pour la gestion comptable de l’entreprise. Présente le tout de manière claire, synthétique, avec des tableaux ou graphiques si utile, en t’adressant à un lecteur non expert.
 
 Langue : Français
 """
