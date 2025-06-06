@@ -37,5 +37,5 @@ EXPOSE 8080
 
 # === Lancer l'app
 
-CMD ["gunicorn", "app:app", "--workers=2", "--threads=4", "--timeout=300", "--bind=0.0.0.0:8080", "--preload", "--no-sendfile", "--log-level=debug"]
+CMD ["gunicorn", "app:app", "--workers=2", "--threads=4", "--timeout=300", "--bind=0.0.0.0:8080", "--worker-class", "uvicorn.workers.UvicornWorker", "--preload", "--no-sendfile", "--log-level=debug"]
 
