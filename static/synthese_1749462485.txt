@@ -1,9 +1,0 @@
-é	6600,00	0,00	I	20200618	20200618	0,00	
-
-Il s'agit d'une analyse financière des opérations de la société A-nouveaux pour l'année 2019. Les données comprennent les informations sur les clients, les comptes, les montants débités et crédités, ainsi que les références des pièces et des écritures.
-
-En examinant les données, on peut observer que la société a effectué des opérations avec plusieurs clients, chaque opération étant enregistrée avec un montant débité ou crédité. Les montants débités varient de 0 à 8726,40, tandis que les montants crédités varient de 0 à 6600,00.
-
-Les opérations sont effectuées avec différents types de comptes clients, tels que CCAN, CCNH, CCPO, CEAS, CFLE, CGRA, CHIT, CPHA, et CSFM. Ces comptes clients ont des soldes débiteurs ou créditeurs en fonction des opérations effectuées.
-
-L'analyse financière de ces opérations permet de suivre les flux financiers de la société, de contrôler les soldes des comptes clients et de prendre des décisions financières basées sur ces données.

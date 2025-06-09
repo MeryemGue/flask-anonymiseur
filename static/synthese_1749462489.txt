@@ -1,5 +1,0 @@
-é	4800,00	0,00	B	20200618	20200618	0,00	
-
-Cette analyse financière montre des opérations de débit et crédit pour différents clients. Les montants débités varient entre 0 et 8726,40, tandis que les montants crédités varient entre 0 et 129,60. Il semble y avoir un solde nul pour chaque transaction, ce qui signifie que les montants débités équivalent aux montants crédités.
-
-Il est important de noter que ces transactions ont été validées à la date du 18 juin 2020. Il peut être intéressant de comparer ces transactions avec d'autres données financières pour obtenir une image plus complète de la situation financière de l'entreprise.
