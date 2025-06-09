@@ -208,6 +208,147 @@
     </div>
   {% endif %}
 </div>
+<div class="modal fade" id="analyseModal" tabindex="-1" aria-labelledby="analyseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content p-3">
+  <div class="modal-header">
+    <h5 class="modal-title">Analyse des fichiers sélectionnés</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+  </div>
+  <div class="modal-body">
+    <!-- Type de fichier -->
+    <div class="mb-3">
+      <label for="type-fichier" class="form-label">Type de fichier</label>
+      <select id="type-fichier" class="form-select">
+        <option value="">-- Choisir --</option>
+        <option value="FEC">Fichier FEC</option>
+        <option value="Contrat">Contrat de travail</option>
+        <option value="Bulletin">Bulletin de paie</option>
+        <option value="DSN">Déclaration DSN</option>
+      </select>
+    </div>
+
+    <!-- Choix du prompt -->
+    <div class="mb-3" id="select-prompt-container" style="display:none;">
+      <label for="select-prompt" class="form-label">Choix du prompt</label>
+      <select id="select-prompt" class="form-select"></select>
+    </div>
+
+    <!-- Prompt personnalisé -->
+    <div class="mb-3" id="custom-prompt-container" style="display:none;">
+      <label for="custom-prompt" class="form-label">Prompt personnalisé</label>
+      <textarea id="custom-prompt" class="form-control" rows="4" placeholder="Rédige ton propre prompt ici..."></textarea>
+    </div>
+
+    <!-- Choix du LLM -->
+    <div class="mb-3">
+      <label for="select-llm" class="form-label">Modèle LLM</label>
+      <select id="select-llm" class="form-select">
+        <option value="gpt-3.5-turbo">ChatGPT 3.5</option>
+        <option value="claude" disabled>ChatGPT 4o(bientôt)</option>
+        <option value="claude" disabled>ChatGPT 4oMini(bientôt)</option>
+        <option value="claude" disabled>Claude (bientôt)</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button id="launch-analysis" class="btn btn-primary">Lancer l’analyse</button>
+  </div>
+</div>
+
+<script>
+const promptsParType = {
+  "FEC": ["Analyse FEC", "Audit écritures", "Autre"],
+  "Contrat": ["Analyse contrat de travail", "Clauses juridiques", "Autre"],
+  "Bulletin": ["Analyse bulletin de paie", "Conformité paie", "Autre"],
+  "DSN": ["Analyse DSN", "Détection anomalies DSN", "Autre"]
+};
+
+const prompts = {
+  "Analyse FEC": "Tu es un expert-comptable spécialisé en analyse financière. Analyse le fichier FEC et génère un rapport clair sur les écritures, journaux, anomalies et indicateurs.",
+  "Audit écritures": "Effectue un audit des écritures comptables, identifie les doublons, incohérences de dates, et détecte toute anomalie.",
+  "Analyse contrat de travail": "Analyse les clauses d’un contrat de travail, identifie les éléments obligatoires, et vérifie la conformité juridique.",
+  "Clauses juridiques": "Identifie les clauses importantes (durée, période d’essai, rémunération...) et leur conformité avec le droit du travail.",
+  "Analyse bulletin de paie": "Analyse les bulletins de paie : structures de salaire, retenues, primes, conformité des calculs.",
+  "Conformité paie": "Vérifie la conformité du bulletin par rapport à la réglementation du travail et aux cotisations sociales.",
+  "Analyse DSN": "Analyse la déclaration sociale nominative pour détecter les éventuelles erreurs ou incohérences dans les données.",
+  "Détection anomalies DSN": "Identifie les anomalies fréquentes dans une DSN comme des dates erronées, codes absents ou incohérences de montants."
+};
+
+document.getElementById('type-fichier').addEventListener('change', function () {
+  const type = this.value;
+  const container = document.getElementById('select-prompt-container');
+  const promptSelect = document.getElementById('select-prompt');
+  const customPrompt = document.getElementById('custom-prompt-container');
+
+  if (type && promptsParType[type]) {
+    container.style.display = 'block';
+    customPrompt.style.display = 'none';
+    promptSelect.innerHTML = promptsParType[type].map(p => `<option value="${p}">${p}</option>`).join('');
+  } else {
+    container.style.display = 'none';
+    customPrompt.style.display = 'none';
+  }
+});
+
+document.getElementById('select-prompt').addEventListener('change', function () {
+  document.getElementById('custom-prompt-container').style.display =
+    this.value === 'Autre' ? 'block' : 'none';
+});
+
+document.getElementById('launch-analysis').addEventListener('click', function () {
+  const selectedFiles = Array.from(document.querySelectorAll('input.file-checkbox:checked')).map(cb => cb.value);
+  const type = document.getElementById('type-fichier').value;
+  const promptChoice = document.getElementById('select-prompt').value;
+  const llm = document.getElementById('select-llm').value;
+  const prompt = (promptChoice === 'Autre')
+    ? document.getElementById('custom-prompt').value
+    : prompts[promptChoice] || promptChoice;
+
+  if (!selectedFiles.length || !prompt) {
+    alert("❗ Veuillez choisir au moins un fichier et un prompt.");
+    return;
+  }
+
+  fetch("/analyse-avancee", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    body: JSON.stringify({ fichiers: selectedFiles, llm: llm, prompt: prompt })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      document.querySelector(".container").insertAdjacentHTML("beforeend", `
+  <div id="synthese-ia">
+    <div class="alert alert-success mt-3">✅ Analyse terminée !</div>
+
+    <a href="${data.pdf_url}" class="btn btn-success me-2" download>Télécharger PDF</a>
+    <a href="${data.txt_url}" class="btn btn-secondary" download>Télécharger TXT</a>
+    <button id="delete-synthese" class="btn btn-danger ms-1">Supprimer</button>
+
+    <pre class="mt-3 bg-light p-3">${data.synthese}</pre>
+  </div>
+`);
+
+      document.getElementById("delete-synthese").addEventListener("click", () => {
+          document.getElementById("synthese-ia")?.remove();
+        });
+      bootstrap.Modal.getInstance(document.getElementById('analyseModal'))?.hide();
+
+      // Faire défiler vers la synthèse
+      setTimeout(() => {
+        document.querySelector("pre")?.scrollIntoView({ behavior: "smooth" });
+      }, 300); // petit délai pour attendre le DOM
+
+    } else {
+      alert("❌ Erreur : " + data.error);
+    }
+  });
+});
+</script>
 
 <script>
 const rowsPerPage = 9;
@@ -559,58 +700,78 @@ document.getElementById('download-drive')?.addEventListener('click', () => {
 
 document.getElementById('analyse-selected')?.addEventListener('click', () => {
   const selected = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(cb => cb.value);
-  const button = document.getElementById("analyse-selected");
-
   if (selected.length === 0) {
     alert("⚠️ Aucun fichier sélectionné pour l'analyse.");
     return;
   }
 
-  // ⏳ Change le texte du bouton + désactive
-  const originalHTML = button.innerHTML;
-  button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyse en cours...';
-  button.disabled = true;
+  // Stocker les fichiers sélectionnés dans une variable globale
+  window.selectedFichiersPourAnalyse = selected;
 
-  fetch("/analyse", {
+  // Ouvrir la modale
+  const modal = new bootstrap.Modal(document.getElementById('analyseModal'));
+  modal.show();
+});
+
+
+
+  document.getElementById('launch-advanced-analysis')?.addEventListener('click', () => {
+  const llm = document.getElementById('select-llm').value;
+  const prompt = document.getElementById('select-prompt').value;
+  const fichiers = window.selectedFichiersPourAnalyse || [];
+
+  const button = document.getElementById("launch-advanced-analysis");
+  button.disabled = true;
+  button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyse...';
+
+  fetch("/analyse-avancee", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Requested-With": "XMLHttpRequest"
     },
-    body: JSON.stringify({ fichiers: selected })
+    body: JSON.stringify({ fichiers, llm, prompt })
   })
-  .then(res => res.json())
-  .then(data => {
-    button.innerHTML = originalHTML;
-    button.disabled = false;
+    .then(res => res.json())
+    .then(data => {
+      button.disabled = false;
+      button.innerHTML = "Lancer l’analyse";
+      bootstrap.Modal.getInstance(document.getElementById('analyseModal'))?.hide();
 
-    if (data.success) {
-      const syntheseCard = document.createElement('div');
-      syntheseCard.className = "card mb-5 centered-card";
-      syntheseCard.id = "synthese-ia";
-      syntheseCard.innerHTML = `
-        <div class="card-header text-white" style="background-color: #7e3ff2;">📌 Synthèse IA :</div>
+      if (data.success) {
+        const syntheseCard = document.createElement('div');
+        syntheseCard.className = "card mb-5 centered-card";
+        syntheseCard.id = "synthese-ia";
+
+        syntheseCard.innerHTML = `
+        <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: #7e3ff2;">
+          📌 Synthèse IA :
+          <button id="delete-synthese" class="btn btn-sm btn-outline-light">🗑 Supprimer</button>
+        </div>
         <div class="card-body">
+          <a href="${data.pdf_url}" class="btn btn-primary mb-3" download>Télécharger PDF</a>
+          <a href="${data.txt_url}" class="btn btn-secondary mb-3 ms-2" download>Télécharger TXT</a>
           <pre style="white-space: pre-wrap;">${data.synthese}</pre>
         </div>
       `;
 
-      const existing = document.querySelector(".card.mb-5");
-      if (existing) existing.remove();
-      document.querySelector(".container").appendChild(syntheseCard);
+        document.getElementById("synthese-ia")?.remove();
+        document.querySelector(".container").appendChild(syntheseCard);
 
-      setTimeout(() => {
+        document.getElementById("delete-synthese").addEventListener("click", () => {
+          document.getElementById("synthese-ia")?.remove();
+        });
+
         document.getElementById("synthese-ia")?.scrollIntoView({ behavior: "smooth" });
-      }, 300);
-    } else {
-      alert("❌ Échec de l’analyse : " + data.error);
-    }
-  })
-  .catch(err => {
-    button.innerHTML = originalHTML;
-    button.disabled = false;
-    alert("❌ Erreur réseau : " + err);
-  });
+      } else {
+        alert("❌ Échec de l’analyse : " + data.error);
+      }
+    })
+    .catch(err => {
+      button.disabled = false;
+      button.innerHTML = "Lancer l’analyse";
+      alert("❌ Erreur réseau : " + err.message);
+    });
 });
 
 </script>
@@ -624,5 +785,7 @@ document.getElementById('analyse-selected')?.addEventListener('click', () => {
     }
   });
 </script>
+
+
 </body>
 </html>

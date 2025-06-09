@@ -8,6 +8,7 @@ from utils import anonymiser_pdf, anonymiser_fichier_fec, anonymiser_fichier_dsn
 from google_oauth import bp_google
 from flask import jsonify
 
+from waitress import serve
 
 import openai
 
@@ -34,11 +35,17 @@ def allowed_file(filename):
 
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
-    contenu = ""
+@app.route("/analyse-avancee", methods=["POST"])
+def analyse_avancee():
+    data = request.json
+    fichiers = data.get("fichiers", [])
+    llm_type = data.get("llm", "gpt-3.5-turbo")  # Par défaut OpenAI
+    prompt_template = data.get("prompt", "Analyse par défaut...")
 
-    for fichier in fichiers_anonymises:
-        path = os.path.join(dossier, fichier)
+    # Concatène le contenu des fichiers
+    contenu = ""
+    for fichier in fichiers:
+        path = os.path.join(RESULT_FOLDER, fichier)
         ext = os.path.splitext(fichier)[1].lower()
 
         if ext in {".txt", ".edi"}:
@@ -49,30 +56,42 @@ def generer_synthese_llm(fichiers_anonymises, dossier="fichiers_anonymises"):
             contenu += "\n".join([page.get_text() for page in doc]) + "\n\n"
             doc.close()
 
-    prompt = f"""
+    prompt_final = f"{prompt_template.strip()}\n\n---\n\n{contenu[:3000]}"
 
+    if llm_type == "gpt-3.5-turbo":
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt_final}],
+            temperature=0.7
+        )
+        output = response.choices[0].message.content
+    else:
+        return jsonify({"success": False, "error": "LLM non supporté pour l’instant."})
 
-{contenu[:3000]}
+    # Sauvegarde temporaire en .txt
+    timestamp = int(time.time())
+    nom_base = f"synthese_{timestamp}"
+    txt_path = os.path.join("static", f"{nom_base}.txt")
+    pdf_path = os.path.join("static", f"{nom_base}.pdf")
 
-Tu es un expert-comptable spécialisé en analyse financière. Analyse le fichier FEC ci-joint (Fichier des Écritures Comptables) et génère un rapport clair et structuré. Commence par donner un résumé global de l’activité comptable : période couverte, nombre d’écritures, types de journaux et principales classes comptables utilisées.
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write(output)
 
-Détaille ensuite les principales charges et produits en identifiant les comptes les plus fréquents et les variations importantes. Analyse les flux de trésorerie à partir des comptes bancaires : montants entrants et sortants, soldes par compte.
+    # Convertit en PDF
+    import fpdf
+    pdf = fpdf.FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    for line in output.splitlines():
+        pdf.cell(200, 10, txt=line, ln=True)
+    pdf.output(pdf_path)
 
-Repère les anomalies ou irrégularités potentielles comme les doublons, les incohérences de dates, ou les écritures comptables anormales. Si les données le permettent, propose des indicateurs financiers simples comme le taux de marge brute, la part des charges fixes ou variables, ou la concentration des ventes.
-
-Termine par des recommandations ou des axes d’amélioration pour la gestion comptable de l’entreprise. Présente le tout de manière claire, synthétique, avec des tableaux ou graphiques si utile, en t’adressant à un lecteur non expert.
-
-Langue : Français
-"""
-
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
-    )
-
-    return response.choices[0].message.content
-
+    return jsonify({
+        "success": True,
+        "synthese": output,
+        "pdf_url": url_for('static', filename=f"{nom_base}.pdf"),
+        "txt_url": url_for('static', filename=f"{nom_base}.txt")
+    })
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -143,16 +162,16 @@ def index():
     return render_template("index.html", fichiers=fichiers_actuels, synthese=synthese)
 
 
-@app.route("/analyse", methods=["POST"])
-def analyse_files():
-    data = request.json
-    fichiers = data.get("fichiers", [])
-
-    try:
-        synthese = generer_synthese_llm(fichiers)
-        return jsonify({"success": True, "synthese": synthese})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+# @app.route("/analyse", methods=["POST"])
+# def analyse_files():
+#     data = request.json
+#     fichiers = data.get("fichiers", [])
+#
+#     try:
+#         synthese = generer_synthese_llm(fichiers)
+#         return jsonify({"success": True, "synthese": synthese})
+#     except Exception as e:
+#         return jsonify({"success": False, "error": str(e)})
 
 
 @app.route("/download/<filename>")
@@ -194,5 +213,7 @@ def google_credentials():
     }
 
 
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

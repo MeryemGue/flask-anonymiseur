@@ -1,0 +1,36 @@
+é	1980,00	0,00	I	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client023	CSFM	Client023	REF-49502	20190101	Libellé anonymisé	500,00	0,00	I	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client024	CSFM	Client024	REF-17369	20190101	Libellé anonymisé	3600,00	0,00	I	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client025	CSFM	Client025	REF-89162	20190101	Libellé anonymisé	4500,00	0,00	I	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client026	CSFM	Client026	REF-66139	20190101	Libellé anonymisé	2100,00	0,00	I	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client027	CSFM	Client027	REF-74162	20190101	Libellé anonymisé	300,00	0,00	I	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client028	CSFM	Client028	REF-74456	20190101	Libellé anonymisé	450,00	0,00	I	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client029	CSFM	Client029	REF-83489	20190101	Libellé anonymisé	360,00	0,00	I	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client030	CSFM	Client030	REF-54365	20190101	Libellé anonymisé	540,00	0,00	I	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client031	CMAG	Client031	REF-19486	20190101	Libellé anonymisé	1980,00	0,00	G	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client032	CMAG	Client032	REF-93552	20190101	Libellé anonymisé	720,00	0,00	G	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client033	CMAG	Client033	REF-82519	20190101	Libellé anonymisé	900,00	0,00	G	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client034	CMAG	Client034	REF-79497	20190101	Libellé anonymisé	540,00	0,00	G	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client035	CMAG	Client035	REF-29225	20190101	Libellé anonymisé	540,00	0,00	G	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client036	CMAG	Client036	REF-56186	20190101	Libellé anonymisé	720,00	0,00	G	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client037	CMAG	Client037	REF-42557	20190101	Libellé anonymisé	180,00	0,00	G	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client038	CMAG	Client038	REF-33040	20190101	Libellé anonymisé	720,00	0,00	G	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client039	CMAG	Client039	REF-75890	20190101	Libellé anonymisé	540,00	0,00	G	20200618	20200618	0,00	
+AN	A-nouveaux	1	20190101	411	Client040	CMAG	Client040	REF-51374	20190101	Libellé anonymisé	720,00	0,00	G	20200618	20200618	0,00	
+
+Rapport d'analyse financière : 
+
+1. Analyse des écritures : 
+- Les écritures sont bien réparties par client et par type de compte (CACF, CCAN, CCNH, CCPO, CEAS, CFLE, CGRA, CHIT, CPHA, CSFM, CMAG).
+- Les montants des débits et crédits sont correctement renseignés.
+
+2. Analyse des journaux : 
+- Le journal A-nouveaux contient l'ensemble des écritures avec des informations détaillées sur les clients et les comptes associés.
+
+3. Anomalies : 
+- Aucune anomalie majeure n'a été identifiée dans les écritures.
+
+4. Indicateurs : 
+- Les montants en devises sont tous égaux à zéro, ce qui indique une bonne gestion des opérations financières.
+
+En conclusion, le fichier FEC analysé présente des données complètes et précises, sans anomalies majeures.

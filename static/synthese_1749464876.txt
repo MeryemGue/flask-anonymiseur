@@ -1,0 +1,18 @@
+Dans le fichier FEC fourni, nous avons un journal intitulé "A-nouveaux" contenant plusieurs écritures. Chaque écriture est identifiée par un numéro, une date, un compte et un montant en débit ou crédit.
+
+Voici un résumé des écritures présentes dans le journal "A-nouveaux":
+
+- Les écritures concernent principalement des clients avec des comptes de type "CACF", "CAPP", "CCAN", "CCHC", "CCNH", "CCPO", "CELS", "CEPS", "CFLA", "CFRE" et "CGRA".
+- Les montants des écritures varient de quelques centaines à plusieurs milliers d'euros.
+- Certaines écritures ne contiennent pas de montant en crédit, indiquant des mouvements de débit uniquement.
+
+Anomalies potentielles:
+- Il y a des écritures avec un montant nul, ce qui peut nécessiter une vérification supplémentaire.
+- Certains comptes auxiliaires (CompAuxNum) ne sont pas renseignés, ce qui peut rendre difficile le rapprochement des écritures avec les tiers correspondants.
+
+Indicateurs clés:
+- Les montants les plus importants concernent les clients avec des comptes de type "CFRE" et "CCHC".
+- Les comptes de type "CELS" ont des mouvements de débit et crédit équilibrés.
+- Les comptes de type "CCNH" ont plusieurs écritures de montants variés.
+
+En conclusion, ce journal FEC contient des informations sur les transactions financières liées à des clients. Il serait recommandé de vérifier les écritures avec des montants nuls et de s'assurer que tous les comptes auxiliaires sont correctement renseignés pour une meilleure traçabilité des opérations.

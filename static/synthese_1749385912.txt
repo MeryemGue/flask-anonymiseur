@@ -1,0 +1,7 @@
+é	1200,00	0,00	I	20200618	20200618	0,00	
+
+FEC stands for Fichier d'Écritures Comptables, which is a file that contains all the accounting entries for a company within a specific period. The data provided appears to be a sample of such entries, with information such as the journal code, journal name, entry number, entry date, account number, account name, auxiliary account number, auxiliary account name, reference number, entry description, debit amount, credit amount, and various other details.
+
+In this sample data, we can see entries for different clients with varying debit and credit amounts. The entries also have different auxiliary account numbers, which might represent different types of transactions or clients. The entries are classified by journal code, such as AN for A-nouveaux.
+
+This data seems to be structured and organized in a way that allows for easy processing and analysis of the company's financial transactions. The FEC file is typically used for auditing purposes and to ensure the accuracy and completeness of a company's financial records.

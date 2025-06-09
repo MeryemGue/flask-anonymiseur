@@ -37,5 +37,4 @@ EXPOSE 8080
 
 # === Lancer l'app
 
-CMD ["gunicorn", "app:app", "--workers=2", "--threads=4", "--timeout=300", "--bind=0.0.0.0:8080", "--preload", "--no-sendfile", "--log-level=debug"]
-
+CMD ["waitress-serve", "--host=0.0.0.0", "--port=8080", "app:app"]

@@ -1,0 +1,23 @@
+			20210428		
+
+Après analyse du fichier FEC, voici un rapport sur les écritures, journaux, anomalies et indicateurs :
+
+1. Écritures :
+   - Le fichier FEC contient un total de 25 écritures.
+   - Toutes les écritures ont été enregistrées dans le journal A-NOUVEAU.
+   - Les montants des écritures varient entre 0,34 et 1578,22.
+   - Aucune écriture ne comporte de montant au crédit.
+
+2. Journaux :
+   - Toutes les écritures proviennent du journal A-NOUVEAU.
+   - Les dates des écritures s'échelonnent de janvier à mars 2021.
+
+3. Anomalies :
+   - Toutes les écritures ont été validées à la date du 28 avril 2021.
+   - Certains libellés des écritures sont anonymisés, ce qui peut rendre difficile la compréhension de la nature des transactions.
+
+4. Indicateurs :
+   - Les montants des écritures sont assez variables, ce qui peut indiquer une diversité d'opérations financières.
+   - L'absence de montants au crédit dans les écritures peut soulever des questions sur la nature des opérations enregistrées.
+
+En conclusion, le fichier FEC analysé présente une diversité d'opérations financières enregistrées dans le journal A-NOUVEAU. Cependant, la présence de libellés anonymisés et l'absence de montants au crédit dans les écritures soulèvent des interrogations sur la clarté et la fiabilité des données comptables. Il serait recommandé de clarifier ces points pour assurer une meilleure compréhension et fiabilité des informations financières.

@@ -1,0 +1,10 @@
+Les anomalies détectées dans les écritures comptables sont les suivantes :
+
+1. Il y a des doublons dans les comptes clients. Par exemple, les clients 014 et 015 ont des écritures en sens inverse, ce qui peut être une erreur.
+2. Les dates des écritures (EcritureDate) et des pièces (PieceDate) sont identiques, ce qui peut être correct mais nécessite une vérification approfondie pour s'assurer de l'exactitude.
+3. Certains comptes n'ont pas de montants crédités ou débités (0,00), ce qui peut être une anomalie ou une omission.
+4. Certains écritures n'ont pas de lettrage (EcritureLet) ou de date de lettrage (DateLet), ce qui peut indiquer un manque de suivi dans le processus de lettrage des écritures.
+5. Certains montants sont libellés en devise (Montantdevise) mais ne sont pas associés à une devise spécifique (Idevise), ce qui peut poser problème dans la conversion des montants.
+6. Certains comptes n'ont pas de libellé (CompteLib), ce qui peut rendre difficile la compréhension de la nature des transactions.
+
+Il est recommandé de vérifier et corriger ces anomalies pour assurer l'intégrité des données comptables.
