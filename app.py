@@ -8,7 +8,6 @@ from utils import anonymiser_pdf, anonymiser_fichier_fec, anonymiser_fichier_dsn
 from google_oauth import bp_google
 from flask import jsonify
 
-from waitress import serve
 
 import openai
 
@@ -195,4 +194,4 @@ def google_credentials():
 
 
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
