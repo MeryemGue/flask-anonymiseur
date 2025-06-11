@@ -37,4 +37,6 @@ EXPOSE 8080
 
 # === Lancer l'app
 
-CMD ["waitress-serve", "--host=0.0.0.0", "--port=8080", "app:app"]
+CMD ["waitress-serve", "--host=0.0.0.0", "--port=8080", "--asyncore-use-select", "--threads=4", "--connection-limit=100", "--channel-timeout=120", "app:app"]
+
+
