@@ -28,15 +28,11 @@ COPY . /app
 # === Dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-
-
 # === Exposition du port
 EXPOSE 8080
 
-
-
 # === Lancer l'app
 
-CMD ["waitress-serve", "--host=0.0.0.0", "--port=8080", "--asyncore-use-select", "--threads=4", "--connection-limit=100", "--channel-timeout=120", "app:app"]
+CMD ["gunicorn", "--timeout=120", "--workers=1", "--bind=0.0.0.0:8080", "--config=gunicorn_conf.py", "app:app"]
 
 

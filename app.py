@@ -112,14 +112,6 @@ def index():
                 flash(f"❌ Format non pris en charge : {filename}", "danger")
                 continue
 
-            # Taille trop grande
-            # file.seek(0, os.SEEK_END)
-            # file_size_mb = file.tell() / (1024 * 1024)
-            # file.seek(0)
-            # if file_size_mb > MAX_FILE_SIZE_MB:
-            #     flash(f"❌ Fichier trop volumineux (> {MAX_FILE_SIZE_MB} Mo) : {filename}", "danger")
-            #     continue
-
             # Sauvegarde uniquement si tout est valide
             input_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(input_path)
@@ -161,24 +153,11 @@ def index():
     fichiers_actuels = sorted(os.listdir(app.config["RESULT_FOLDER"]))
     return render_template("index.html", fichiers=fichiers_actuels, synthese=synthese)
 
-
-# @app.route("/analyse", methods=["POST"])
-# def analyse_files():
-#     data = request.json
-#     fichiers = data.get("fichiers", [])
-#
-#     try:
-#         synthese = generer_synthese_llm(fichiers)
-#         return jsonify({"success": True, "synthese": synthese})
-#     except Exception as e:
-#         return jsonify({"success": False, "error": str(e)})
-
-
-@app.route("/download/<filename>")
 def download_file(filename):
     file_path = os.path.join(RESULT_FOLDER, filename)
     if os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True)
+        # Ajout de l'option `conditional=False` pour éviter les bugs liés à `sendfile`
+        return send_file(file_path, as_attachment=True, conditional=False)
     flash("Fichier introuvable", "danger")
     return redirect(url_for("index"))
 
@@ -211,8 +190,6 @@ def google_credentials():
     return {
         "client_id": os.getenv("GOOGLE_CLIENT_ID")
     }
-
-
 
 
 if __name__ == "__main__":
