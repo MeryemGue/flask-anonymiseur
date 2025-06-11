@@ -153,11 +153,11 @@ def index():
     fichiers_actuels = sorted(os.listdir(app.config["RESULT_FOLDER"]))
     return render_template("index.html", fichiers=fichiers_actuels, synthese=synthese)
 
+@app.route("/download/<filename>")
 def download_file(filename):
     file_path = os.path.join(RESULT_FOLDER, filename)
     if os.path.exists(file_path):
-        # Ajout de l'option `conditional=False` pour éviter les bugs liés à `sendfile`
-        return send_file(file_path, as_attachment=True, conditional=False)
+        return send_file(file_path, as_attachment=True)
     flash("Fichier introuvable", "danger")
     return redirect(url_for("index"))
 
@@ -190,6 +190,8 @@ def google_credentials():
     return {
         "client_id": os.getenv("GOOGLE_CLIENT_ID")
     }
+
+
 
 
 if __name__ == "__main__":
