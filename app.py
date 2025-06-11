@@ -156,16 +156,9 @@ def index():
 def download_file(filename):
     file_path = os.path.join(RESULT_FOLDER, filename)
     if os.path.exists(file_path):
-        return send_file(
-            file_path,
-            as_attachment=True,
-            conditional=False,  # <<== important
-            etag=False,         # optionnel
-            add_etags=False     # optionnel
-        )
+        return send_file(file_path, as_attachment=True)
     flash("Fichier introuvable", "danger")
     return redirect(url_for("index"))
-
 
 
 @app.route("/reset")
