@@ -2,7 +2,6 @@ import os
 import re
 import fitz
 import pandas as pd
-import psutil
 from faker import Faker
 import spacy
 import ocrmypdf
@@ -390,19 +389,17 @@ def anonymiser_contrat_complet(chemin_pdf, is_scanned=True):
         PDF_FINAL = os.path.join(DOSSIER_ANONYMISÉ, "anonymise_" + os.path.basename(chemin_pdf))
 
         if is_scanned:
-            print(f"🔍 Mémoire utilisée : {psutil.virtual_memory().percent}%")
             print("🔁 Lancement de l'OCR même pour grandes pages...")
             try:
                 ocrmypdf.ocr(
                     chemin_pdf,
                     PDF_OCR,
                     force_ocr=True,
-                    pdf_renderer='sandwich',
+                    language="fra",
+                    use_threads=True,
+                    optimize=0,
                     deskew=True,
-                    use_threads=False,  # ✅ éviter surcharge CPU/RAM
-                    optimize=3,
-                    skip_big=True,  # ✅ ignore les pages trop lourdes
-                    max_image_mp=5.0
+                    pdf_renderer="sandwich",
                 )
             except Exception as e:
                 print("❌ Erreur OCR PDF :", e)
