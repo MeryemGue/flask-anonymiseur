@@ -1,0 +1,79 @@
+REF-64902|20210308|Libellé anonymisé|0|1200|||20221208|||1745
+bq|Banque|12|20210308|5120XXXX|Client028|||REF-69911|20210308|Libellé anonymisé|1200|0|||20221208|||1745
+od|Opérations diverses|13|20210309|4551XXXX|Client029|||REF-06084|20210309|Libellé anonymisé|0|1782,11|||20221208|||1746
+od|Opérations diverses|13|20210309|5120XXXX|Client030|||REF-91882|20210309|Libellé anonymisé|1782,11|0|||20221208|||1746
+od|Opérations diverses|14|20210309|4551XXXX|Client031|||REF-46026|20210309|Libellé anonymisé|0|1563,24|||20221208|||1747
+od|Opérations diverses|14|20210309|5120XXXX|Client032|||REF-85835|20210309|Libellé anonymisé|1563,24|0|||20221208|||1747
+bq|Banque|15|20210310|7060XXXX|Client033|||REF-35727|20210310|Libellé anonymisé|0|332,45|||20221208|||1748
+bq|Banque|15|20210310|5120XXXX|Client034|||REF-98381|20210310|Libellé anonymisé|332,45|0|||20221208|||1748
+bq|Banque|16|20210311|7060XXXX|Client035|||REF-94184|20210311|Libellé anonymisé|0|275,22|||20221208|||1749
+bq|Banque|16|20210311|5120XXXX|Client036|||REF-70898|20210311|Libellé anonymisé|275,22|0|||20221208|||1749
+bq|Banque|17|20210312|7060XXXX|Client037|||REF-92381|20210312|Libellé anonymisé|0|1005,99|||20221208|||1750
+bq|Banque|17|20210312|5120XXXX|Client038|||REF-64317|20210312|Libellé anonymisé|1005,99|0|||20221208|||1750
+od|Opérations diverses|18|20210315|4551XXXX|Client039|||REF-34408|20210315|Libellé anonymisé|0|1082,26|||20221208|||1751
+od|Opérations diverses|18|20210315|5120XXXX|Client040|||REF-26444|20210315|Libellé anonymisé|1082,26|0|||20221208|||1751
+od|Opérations diverses|19|20210315|4551XXXX|Client041|||REF-24362|20210315|Libellé anonymisé|0|1470,29|||20221208|||1752
+od|Opérations diverses|19|20210315|5120XXXX|Client042|||REF-33345|20210315|Libellé anonymisé|1470,29|0|||20221208|||1752
+od|Opérations diverses|20|20210316|4551XXXX|Client043|||REF-77818|20210316|Libellé anonymisé|0|1413,51|||20221208|||1753
+od|Opérations diverses|20|20210316|5120XXXX|Client044|||REF-84112|20210316|Libellé anonymisé|1413,51|0|||20221208|||1753
+od|Opérations diverses|21|20210317|4551XXXX|Client045|||REF-01729|20210317|Libellé anonymisé|0|1229,87|||20221208|||1754
+od|Opérations diverses|21|20210317|5120XXXX|Client046|||REF-10141|20210317|Libellé anonymisé|1229,87|0|||20221208|||1754
+od|Opérations diverses|22|20210318|4551XXXX|Client047|||REF-87196|20210318|Libellé anonymisé|0|1389,89|||20221208|||1755
+od|Opérations diverses|22|20210318|5120XXXX|Client048|||REF-08722|20210318|Libellé anonymisé|1389,89|0|||20221208|||1755
+od|Opérations diverses|23|20210319|4551XXXX|Client049|||REF-11389|20210319|Libellé anonymisé|0|1511,92|||20221208|||1756
+od|Opérations diverses|23|20210319|5120XXXX|Client050|||REF-65647|20210319|Libellé anonymisé|1511,92|0|||20221208|||1756
+od|Opérations diverses|24|20210322|4551XXXX|Client051|||REF-88534|20210322|Libellé anonymisé|0|1594,27|||20221208|||1757
+od|Opérations diverses|24|20210322|5120XXXX|Client052|||REF-99209|20210322|Libellé anonymisé|1594,27|0|||20221208|||1757
+bq|Banque|25|20210323|7060XXXX|Client053|||REF-07147|20210323|Libellé anonymisé|0|347,21|||20221208|||1758
+bq|Banque|25|20210323|5120XXXX|Client054|||REF-23001|20210323|Libellé anonymisé|347,21|0|||20221208|||1758
+bq|Banque|26|20210324|7060XXXX|Client055|||REF-15431|20210324|Libellé anonymisé|0|1172,34|||20221208|||1759
+bq|Banque|26|20210324|5120XXXX|Client056|||REF-17274|20210324|Libellé anonymisé|1172,34|0|||20221208|||1759
+bq|Banque|27|20210325|7060XXXX|Client057|||REF-75656|20210325|Libellé anonymisé|0|545,93|||20221208|||1760
+bq|Banque|27|20210325|5120XXXX|Client058|||REF-31354|20210325|Libellé anonymisé|545,93|0|||20221208|||1760
+bq|Banque|28|20210326|7060XXXX|Client059|||REF-63380|20210326|Libellé anonymisé|0|601,09|||20221208|||1761
+bq|Banque|28|20210326|5120XXXX|Client060|||REF-90831|20210326|Libellé anonymisé|601,09|0|||20221208|||1761
+bq|Banque|29|20210329|7060XXXX|Client061|||REF-38528|20210329|Libellé anonymisé|0|1353,22|||20221208|||1762
+bq|Banque|29|20210329|5120XXXX|Client062|||REF-03479|20210329|Libellé anonymisé|1353,22|0|||20221208|||1762
+bq|Banque|30|20210330|7060XXXX|Client063|||REF-26367|20210330|Libellé anonymisé|0|1430,71|||20221208|||1763
+bq|Banque|30|20210330|5120XXXX|Client064|||REF-96548|20210330|Libellé anonymisé|1430,71|0|||20221208|||1763
+od|Opérations diverses|31|20210331|4551XXXX|Client065|||REF-71639|20210331|Libellé anonymisé|0|1148,26|||20221208|||1764
+od|Opérations diverses|31|20210331|5120XXXX|Client066|||REF-79457|20210331|Libellé anonymisé|1148,26|0|||20221208|||1764
+od|Opérations diverses|32|20210331|4551XXXX|Client067|||REF-40542|20210331|Libellé anonymisé|0|1674,39|||20221208|||1765
+od|Opérations diverses|32|20210331|5120XXXX|Client068|||REF-63152|20210331|Libellé anonymisé|1674,39|0|||20221208|||1765
+od|Opérations diverses|33|20210401|4551XXXX|Client069|||REF-71199|20210401|Libellé anonymisé|0|1405,62|||20221208|||1766
+od|Opérations diverses|33|20210401|5120XXXX|Client070|||REF-46925|20210401|Libellé anonymisé|1405,62|0|||20221208|||1766
+od|Opérations diverses|34|20210402|4551XXXX|Client071|||REF-16605|20210402|Libellé anonymisé|0|1222,39|||20221208|||1767
+od|Opérations diverses|34|20210402|5120XXXX|Client072|||REF-08895|20210402|Libellé anonymisé|1222,39|0|||20221208|||1767
+od|Opérations diverses|35|20210405|4551XXXX|Client073|||REF-22151|20210405|Libellé anonymisé|0|1324,25|||20221208|||1768
+od|Opérations diverses|35|20210405|5120XXXX|Client074|||REF-56423|20210405|Libellé anonymisé|1324,25|0|||20221208|||1768
+od|Opérations diverses|36|20210406|4551XXXX|Client075|||REF-88069|20210406|Libellé anonymisé|0|1159,04|||20221208|||1769
+od|Opérations diverses|36|20210406|5120XXXX|Client076|||REF-41614|20210406|Libellé anonymisé|1159,04|0|||20221208|||1769
+od|Opérations diverses|37|20210407|4551XXXX|Client077|||REF-14488|20210407|Libellé anonymisé|0|1507,36|||20221208|||1770
+od|Opérations diverses|37|20210407|5120XXXX|Client078|||REF-62418|20210407|Libellé anonymisé|1507,36|0|||20221208|||1770
+od|Opérations diverses|38|20210408|4551XXXX|Client079|||REF-49927|20210408|Libellé anonymisé|0|1193,34|||20221208|||1771
+od|Opérations diverses|38|20210408|5120XXXX|Client080|||REF-50727|20210408|Libellé anonymisé|1193,34|0|||20221208|||1771
+od|Opérations diverses|39|20210409|4551XXXX|Client081|||REF-10758|20210409|Libellé anonymisé|0|1376,15|||20221208|||1772
+od|Opérations diverses|39|20210409|5120XXXX|Client082|||REF-71419|20210409|Libellé anonymisé|1376,15|0|||20221208|||1772
+od|Opérations diverses|40|20210412|4551XXXX|Client083|||REF-78152|20210412|Libellé anonymisé|0|1416,49|||20221208|||1773
+od|Opérations diverses|40|20210412|5120XXXX|Client084|||REF-93202|20210412|Libellé anonymisé|1416,49|0|||20221208|||1773
+od|Opérations diverses|41|20210413|4551XXXX|Client085|||REF-37811|20210413|Libellé anonymisé|0|1433,21|||20221208|||1774
+od|Opérations diverses|41|20210413|5120XXXX|Client086|||REF-18424|20210413|Libellé anonymisé|1433,21|0|||20221208|||1774
+od|Opérations diverses|42|20210414|4551XXXX|Client087|||REF-22992|20210414|Libellé anonymisé|0|1369,51|||20221208|||1775
+od|Opérations diverses|42|20210414|5120XXXX|Client088|||REF-60837|20210414|Libellé anonymisé|1369,51|0|||20221208|||1775
+od|Opérations diverses|43|20210415|4551XXXX|Client089|||REF-43547|20210415|Libellé anonymisé|0|1275,59|||20221208|||1776
+od|Opérations diverses|43|20210415|5120XXXX|Client090|||REF-98216|20210415|Libellé anonymisé|1275,59|0|||20221208|||1776
+od|Opérations diverses|44|20210416|4551XXXX|Client091|||REF-90071|20210416|Libellé anonymisé|0|1311,34|||20221208|||1777
+od|Opérations diverses|44|20210416|5120XXXX|Client092|||REF-45123|20210416|Libellé anonymisé|1311,34|0|||20221208|||1777
+od|Opérations diverses|45|20210419|4551XXXX|Client093|||REF-92764|20210419|Libellé anonymisé|0|1006,38|||20221208|||1778
+od|Opérations diverses|45|20210419|5120XXXX|Client094|||REF-86057|20210419|Libellé anonymisé|1006,38|0|||20221208|||1778
+od|Opérations diverses|46|20210420|4551XXXX|Client095|||REF-80749|20210420|Libellé anonymisé|0|1336,46|||20221208|||1779
+od|Opérations diverses|46|20210420|5120XXXX|Client096|||REF-15746|20210420|Libellé anonymisé|1336,46|0|||20221208|||1779
+od|Opérations diverses|47|20210421|4551XXXX|Client097|||REF-80835|20210421|Libellé anonymisé|0|1234,59|||20221208|||1780
+od|Opérations diverses|47|20210421|5120XXXX|Client098|||REF-89788|20210421|Libellé anonymisé|1234,59|0|||20221208|||1780
+od|Opérations diverses|48|20210422|4551XXXX|Client099|||REF-76956|20210422|Libellé anonymisé|0|1375,79|||20221208|||1781
+od|Opérations diverses|48|20210422|5120XXXX|Client100|||REF-82141|20210422|Libellé anonymisé|1375,79|0|||20221208|||1781
+od|Opérations diverses|49|20210423|4551XXXX|Client101|||REF-43762|20210423|Libellé anonymisé|0|1287,47|||20221208|||1782
+od|Opérations diverses|49|20210423|5120XXXX|Client102|||REF-62818|20210423|Libellé anonymisé|1287,47|0|||20221208|||1782
+od|Opérations diverses|50|20210426|4551XXXX|Client103|||REF-86794|20210426|Libellé anonymisé|0|1165,14|||20221208|||1783
+od|Opérations diverses|50|20210426|5120XXXX|Client104|||REF-14086|20210426|Libellé anonymisé|1165,14|0|||20221208|||1783
+od|Opérations diverses|51|20210427|4551XXXX|Client105|||REF-32005|20210427|Libellé anonymisé

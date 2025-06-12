@@ -1,0 +1,10 @@
+REF-91273|20210308|Libellé anonymisé|0|237,45|||20221208|||1745
+bq|Banque|12|20210308|5120XXXX|Client028|||REF-80116|20210308|Libellé anonymisé|237,45|0|||20221208|||1745
+od|Opérations diverses|13|20210308|4551XXXX|Client029|||REF-81519|20210308|Libellé anonymisé|0|1402,38|||20221208|||1746
+od|Opérations diverses|13|20210308|5120XXXX|Client030|||REF-36249|20210308|Libellé anonymisé|1402,38|0|||20221208|||1746
+
+La table ci-dessus montre des données d'écritures comptables provenant de différents journaux, tels que le journal d'opérations diverses (OD) et le journal de la banque (BQ). Chaque écriture comporte des informations telles que le numéro de compte, le montant débité ou crédité, la référence de la pièce, etc.
+
+En analysant ces données, on peut observer des opérations de débit et de crédit entre des clients et les comptes de banque. Par exemple, une écriture du 15 février 2021 montre un débit de 157 sur le compte client004 et un crédit de 157 sur le compte client002.
+
+Cela indique des transactions financières entre les clients et la banque, avec des montants variés et des références de pièces uniques pour chaque opération. Ces données peuvent être utilisées pour suivre les mouvements financiers, vérifier les soldes des comptes clients et identifier les opérations frauduleuses potentielles.

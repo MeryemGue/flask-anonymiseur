@@ -130,11 +130,12 @@
 
   <div id="loader" class="text-center text-primary fw-bold my-4" style="display: none;">
     <div class="d-flex justify-content-center align-items-center">
-      <div class="spinner-border text-primary me-2" role="status" style="width: 1.5rem; height: 1.5rem;">
+      <div class="spinner-border text-purple me-2" role="status" style="width: 1.5rem; height: 1.5rem;">
         <span class="visually-hidden">Chargement...</span>
       </div>
-      Anonymisation en cours...
-    </div>
+  <span class="text-purple fw-bold">Anonymisation en cours...</span>
+</div>
+
   </div>
 
   {% if fichiers %}
@@ -297,6 +298,10 @@ document.getElementById('select-prompt').addEventListener('change', function () 
 });
 
 document.getElementById('launch-analysis').addEventListener('click', function () {
+  const button = document.getElementById("launch-analysis");
+  button.disabled = true;
+  button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyse...';
+
   const selectedFiles = Array.from(document.querySelectorAll('input.file-checkbox:checked')).map(cb => cb.value);
   const type = document.getElementById('type-fichier').value;
   const promptChoice = document.getElementById('select-prompt').value;
@@ -321,6 +326,9 @@ document.getElementById('launch-analysis').addEventListener('click', function ()
   .then(res => res.json())
   .then(data => {
     if (data.success) {
+        button.disabled = false;
+        button.innerHTML = "Lancer l’analyse";
+
       document.querySelector(".container").insertAdjacentHTML("beforeend", `
   <div id="synthese-ia">
     <div class="alert alert-success mt-3">✅ Analyse terminée !</div>
@@ -344,6 +352,8 @@ document.getElementById('launch-analysis').addEventListener('click', function ()
       }, 300); // petit délai pour attendre le DOM
 
     } else {
+      button.disabled = false;
+      button.innerHTML = "Lancer l’analyse";
       alert("❌ Erreur : " + data.error);
     }
   });
