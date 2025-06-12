@@ -37,6 +37,8 @@ nlp2 = spacy.load(MODELE_PATH2)
 MODELE_PATH3 = os.path.join(os.path.dirname(__file__), "models", "runs1", "train","signature-detector","weights", "best.pt")
 yolo = YOLO(MODELE_PATH3)
 
+import psutil
+print(f"🔍 Mémoire utilisée : {psutil.virtual_memory().percent}%")
 
 # === FEC ===
 # --- Compteurs pour générer des identifiants anonymes ---
@@ -126,7 +128,7 @@ def ocr_worker(input_pdf, output_pdf, queue):
             language='fra',
             force_ocr=True,
             output_type='pdf',
-            optimize=0,
+            optimize=3,
             deskew=False,
             remove_background=False,
             jobs=1,
