@@ -2,6 +2,7 @@ import os
 import re
 import fitz
 import pandas as pd
+import psutil
 from faker import Faker
 import spacy
 import ocrmypdf
@@ -37,8 +38,6 @@ nlp2 = spacy.load(MODELE_PATH2)
 MODELE_PATH3 = os.path.join(os.path.dirname(__file__), "models", "runs1", "train","signature-detector","weights", "best.pt")
 yolo = YOLO(MODELE_PATH3)
 
-import psutil
-print(f"🔍 Mémoire utilisée : {psutil.virtual_memory().percent}%")
 
 # === FEC ===
 # --- Compteurs pour générer des identifiants anonymes ---
@@ -128,7 +127,7 @@ def ocr_worker(input_pdf, output_pdf, queue):
             language='fra',
             force_ocr=True,
             output_type='pdf',
-            optimize=3,
+            optimize=0,
             deskew=False,
             remove_background=False,
             jobs=1,
@@ -391,6 +390,7 @@ def anonymiser_contrat_complet(chemin_pdf, is_scanned=True):
         PDF_FINAL = os.path.join(DOSSIER_ANONYMISÉ, "anonymise_" + os.path.basename(chemin_pdf))
 
         if is_scanned:
+            print(f"🔍 Mémoire utilisée : {psutil.virtual_memory().percent}%")
             print("🔁 Lancement de l'OCR même pour grandes pages...")
             try:
                 ocrmypdf.ocr(
@@ -400,7 +400,7 @@ def anonymiser_contrat_complet(chemin_pdf, is_scanned=True):
                     pdf_renderer='sandwich',
                     deskew=True,
                     use_threads=False,  # ✅ éviter surcharge CPU/RAM
-                    optimize=0,
+                    optimize=3,
                     skip_big=True,  # ✅ ignore les pages trop lourdes
                     max_image_mp=5.0
                 )
