@@ -395,11 +395,12 @@ def anonymiser_contrat_complet(chemin_pdf, is_scanned=True):
                     chemin_pdf,
                     PDF_OCR,
                     force_ocr=True,
-                    language="fra",
-                    use_threads=True,
-                    optimize=0,
+                    pdf_renderer='sandwich',
                     deskew=True,
-                    pdf_renderer="sandwich",
+                    use_threads=False,  # ✅ éviter surcharge CPU/RAM
+                    optimize=0,
+                    skip_big=True,  # ✅ ignore les pages trop lourdes
+                    max_image_mp=5.0
                 )
             except Exception as e:
                 print("❌ Erreur OCR PDF :", e)
