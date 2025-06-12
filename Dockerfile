@@ -33,6 +33,6 @@ EXPOSE 8080
 
 # === Lancer l'app
 
-CMD ["gunicorn", "--timeout=300", "--workers=1", "--bind=0.0.0.0:8080", "--config=gunicorn_conf.py", "app:app"]
+CMD ["gunicorn", "--timeout=600", "--workers=1", "--bind=0.0.0.0:8080", "--config=gunicorn_conf.py", "app:app"]
 
 
