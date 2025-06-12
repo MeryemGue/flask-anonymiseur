@@ -8,7 +8,6 @@ from utils import anonymiser_pdf, anonymiser_fichier_fec, anonymiser_fichier_dsn
 from google_oauth import bp_google
 from flask import jsonify
 
-
 import openai
 
 load_dotenv()
@@ -77,12 +76,37 @@ def analyse_avancee():
         f.write(output)
 
     # Convertit en PDF
-    import fpdf
-    pdf = fpdf.FPDF()
+
+    from fpdf import FPDF
+
+    class PDF(FPDF):
+        def header(self):
+            # Centrer le logo
+            self.image("static/logo.png", x=75, y=10, w=60)  # adapte si nécessaire
+            self.ln(45)  # espace après le logo
+            self.set_font("Times", "B", 18)
+            self.set_text_color(126, 63, 242)
+            self.cell(0, 10, "Synthèse générée par Xpert-IA", ln=True, align="C")
+            self.ln(10)
+
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("Times", "I", 10)
+            self.set_text_color(160)
+            self.cell(0, 10, f"Page {self.page_no()}", align="C")
+
+    # Création du PDF
+    pdf = PDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    for line in output.splitlines():
-        pdf.cell(200, 10, txt=line, ln=True)
+    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.set_font("Times", "", 12)
+    pdf.set_text_color(33, 33, 33)
+
+    # Texte multiligne propre
+    for line in output.strip().splitlines():
+        pdf.multi_cell(0, 8, line)
+        pdf.ln(1)
+
     pdf.output(pdf_path)
 
     return jsonify({

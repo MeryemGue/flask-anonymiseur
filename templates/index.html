@@ -552,6 +552,7 @@ setTimeout(() => {
       attachCheckboxAndDownloadEvents();
       attachFilterEvent();
       paginateTable();
+      attachAnalyseButton();
     })
     .catch(error => {
       document.getElementById('loader').style.display = 'none';
@@ -776,6 +777,22 @@ document.getElementById('analyse-selected')?.addEventListener('click', () => {
 
 </script>
 <script>
+  function attachAnalyseButton() {
+  const analyseBtn = document.getElementById('analyse-selected');
+  if (!analyseBtn) return;
+
+  analyseBtn.addEventListener('click', () => {
+    const selected = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+      alert("⚠️ Aucun fichier sélectionné pour l'analyse.");
+      return;
+    }
+    window.selectedFichiersPourAnalyse = selected;
+    const modal = new bootstrap.Modal(document.getElementById('analyseModal'));
+    modal.show();
+  });
+}
+
   window.addEventListener('load', () => {
     if (typeof gapi !== 'undefined') {
       onApiLoad();
