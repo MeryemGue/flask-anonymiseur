@@ -22,9 +22,6 @@ from docx.shared import Inches
 from docx2pdf import convert
 
 
-print("🧪 tesseract :", subprocess.getoutput("tesseract --version"))
-print("🧪 ghostscript :", subprocess.getoutput("gs --version"))
-
 # === Configuration ===
 fake = Faker("fr_FR")
 DOSSIER_ANONYMISÉ = "fichiers_anonymises"
