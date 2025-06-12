@@ -1,6 +1,6 @@
 FROM python:3.10
 
-# Installer Tesseract + OCRmyPDF deps + outils d’optimisation
+# Installer les dépendances système
 RUN apt-get update && apt-get install -y \
     libreoffice \
     tesseract-ocr \
@@ -21,18 +21,14 @@ RUN apt-get update && apt-get install -y \
 # Afficher les langues tesseract installées (debug)
 RUN tesseract --list-langs
 
-# === Dossier de travail
 WORKDIR /app
 COPY . /app
 
-# === Dépendances Python
+# Installer les dépendances Python (ajoute gevent ici)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# === Exposition du port
+# Exposer le port
 EXPOSE 8080
 
-# === Lancer l'app
-
-CMD ["gunicorn", "--timeout=600", "--workers=1", "--bind=0.0.0.0:8080", "--config=gunicorn_conf.py", "app:app"]
-
-
+# 💡 Utilisation de Gunicorn avec worker gevent
+CMD ["gunicorn", "--timeout=300", "--workers=1", "--worker-class=gevent", "--bind=0.0.0.0:8080", "app:app"]

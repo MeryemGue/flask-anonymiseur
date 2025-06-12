@@ -1,2 +1,1 @@
-
-gunicorn -t 300 app:app --bind 0.0.0.0:$PORT
+web: gunicorn --timeout=300 --workers=1 --worker-class=gevent --bind=0.0.0.0:$PORT app:app
