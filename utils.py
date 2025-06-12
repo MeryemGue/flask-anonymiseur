@@ -390,17 +390,20 @@ def anonymiser_contrat_complet(chemin_pdf, is_scanned=True):
 
         if is_scanned:
             print("🔁 Lancement de l'OCR même pour grandes pages...")
-            ocrmypdf.ocr(
-                chemin_pdf,
-                PDF_OCR,
-                language='fra',
-                deskew=True,
-                optimize=1,
-                force_ocr=True,
-                pdf_renderer='sandwich',
-                skip_big=False,  # 👈 Forcer l'OCR même si les pages sont grandes
-                oversample=150  # 👈 Réduit la résolution interne pour éviter des tailles trop élevées
-            )
+            try:
+                ocrmypdf.ocr(
+                    chemin_pdf,
+                    output_pdf,
+                    force_ocr=True,
+                    language="fra",
+                    use_threads=True,
+                    optimize=1,
+                    deskew=True,
+                    pdf_renderer="sandwich",
+                )
+            except Exception as e:
+                print("❌ Erreur OCR PDF :", e)
+                return None
 
         # === Règles d’anonymisation
         LABELS = {"NOM", "ADRESSE", "SIRET", "NSS", "DATE", "CODE_NAF", "ENTREPRISE", "MATRICULE", "URSSAF"}
