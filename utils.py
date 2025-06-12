@@ -393,11 +393,11 @@ def anonymiser_contrat_complet(chemin_pdf, is_scanned=True):
             try:
                 ocrmypdf.ocr(
                     chemin_pdf,
-                    output_pdf,
+                    PDF_OCR,
                     force_ocr=True,
                     language="fra",
                     use_threads=True,
-                    optimize=1,
+                    optimize=0,
                     deskew=True,
                     pdf_renderer="sandwich",
                 )
