@@ -398,6 +398,7 @@ def anonymiser_contrat_complet(chemin_pdf, is_scanned=True):
                     language="fra",
                     use_threads=True,
                     optimize=0,
+                    jobs=1,
                     deskew=True,
                     pdf_renderer="sandwich",
                 )

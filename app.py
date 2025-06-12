@@ -102,8 +102,9 @@ def analyse_avancee():
     return jsonify({
         "success": True,
         "synthese": output,
-        "pdf_url": url_for('download_file', filename=f"{session_id}/{nom_base}.pdf"),
-        "txt_url": url_for('download_file', filename=f"{session_id}/{nom_base}.txt")
+        "pdf_url": url_for('download_file', filename=f"{nom_base}.pdf"),
+        "txt_url": url_for('download_file', filename=f"{nom_base}.txt")
+
     })
 
 @app.route("/", methods=["GET", "POST"])
@@ -171,13 +172,19 @@ def index():
     fichiers_actuels = sorted(os.listdir(RESULT_FOLDER_USER)) if os.path.exists(RESULT_FOLDER_USER) else []
     return render_template("index.html", fichiers=fichiers_actuels, synthese=synthese)
 
-@app.route("/download/<path:filename>")
+
+@app.route("/download/<filename>")
 def download_file(filename):
-    file_path = os.path.join("fichiers_anonymises", filename)
+    session_id = session.get("session_id")
+    file_path = os.path.join("fichiers_anonymises", session_id, filename)
+
+    print("🧾 Download demandé :", file_path)  # pour debug
+
     if os.path.exists(file_path):
         return send_file(file_path, as_attachment=True)
     flash("Fichier introuvable", "danger")
     return redirect(url_for("index"))
+
 
 @app.route("/reset")
 def reset():
